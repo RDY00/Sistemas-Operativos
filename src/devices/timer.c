@@ -17,6 +17,13 @@
 #error TIMER_FREQ <= 1000 recommended
 #endif
 
+/* Struct to manage thread sleep ticks */
+struct thread_sleep {
+  int64_t tiks;           /* Number of ticks the thread will be blocked */ 
+  struct thread *t;       /* Pointer to control process block of thread */
+  struct list_elem elem;  /* List element struct */
+};
+
 /* Number of timer ticks since OS booted. */
 static int64_t ticks;
 
@@ -97,9 +104,11 @@ timer_sleep (int64_t ticks)
 
   ASSERT (intr_get_level () == INTR_ON);
 
-  struct thread *t = thread_current ();
-  t->sleep_ticks = ticks;
-  list_push_back (&blocked_list, &t->elem);
+  // struct thread *t = thread_current ();
+  // t->sleep_ticks = ticks;
+  // list_push_back (&blocked_list, &t->elem);
+  struct thread_sleep ts = { .t = thread_current(), .tiks = ticks };
+  list_push_back (&blocked_list, &ts.elem);
   enum intr_level old_level = intr_disable ();
   thread_block ();
   intr_set_level (old_level);
@@ -183,14 +192,14 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
   while (e != list_end (&blocked_list))
   {
-    struct thread *t = list_entry (e, struct thread, elem);
+    struct thread_sleep *ts = list_entry (e, struct thread_sleep, elem);
 
-    if (--t->sleep_ticks > 0)
+    if (--ts->tiks > 0)
     {
       e = list_next (e);
     } else {
       e = list_remove (e);
-      thread_unblock (t);
+      thread_unblock (ts->t);
     }
   }
 
