@@ -174,7 +174,7 @@ timer_print_stats (void)
 {
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
-
+
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
@@ -184,9 +184,8 @@ timer_interrupt (struct intr_frame *args UNUSED)
   for (e = list_begin (&blocked_list); e != list_end (&blocked_list);)
   {
     struct thread *t = list_entry (e, struct thread, elem);
-    if (t->sleep_ticks > 0)
+    if (--t->sleep_ticks > 0)
     {
-      t->sleep_ticks--;
       e = list_next (e);
     } else {
       e = list_remove (e);
