@@ -99,7 +99,6 @@ timer_sleep (int64_t ticks)
 
   struct thread *t = thread_current ();
   t->sleep_ticks = ticks;
-  list_remove (&t->elem);
   list_push_back (&blocked_list, &t->elem);
   intr_disable ();
   thread_block ();
@@ -181,14 +180,15 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   struct list_elem *e;
 
-  for (e = list_begin (&blocked_list); e != list_end (&blocked_list); e = list_next (e))
+  for (e = list_begin (&blocked_list); e != list_end (&blocked_list);)
   {
     struct thread *t = list_entry (e, struct thread, elem);
     if (t->sleep_ticks > 0)
     {
       t->sleep_ticks--;
+      e = list_next (e);
     } else {
-      list_remove (e);
+      e = list_remove (e);
       thread_unblock (t);
     }
   }
