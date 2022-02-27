@@ -179,11 +179,12 @@ timer_print_stats (void)
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
-  struct list_elem *e;
+  struct list_elem *e = list_begin (&blocked_list);
 
-  for (e = list_begin (&blocked_list); e != list_end (&blocked_list);)
+  while (e != list_end (&blocked_list))
   {
     struct thread *t = list_entry (e, struct thread, elem);
+
     if (--t->sleep_ticks > 0)
     {
       e = list_next (e);
