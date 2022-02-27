@@ -187,8 +187,8 @@ timer_interrupt (struct intr_frame *args UNUSED)
     {
       t->sleep_ticks--;
     } else {
-      thread_unblock (t);
       list_remove (e);
+      thread_unblock (t);
     }
   }
 
