@@ -18,8 +18,9 @@
 #endif
 
 /* Struct to manage thread sleep ticks */
-struct thread_sleep {
-  int64_t tiks;           /* Number of ticks the thread will be blocked */ 
+struct thread_sleep 
+{
+  int64_t unblock_tick;   /* Tick in which the thread has to be unblocked */ 
   struct thread *t;       /* Pointer to control process block of thread */
   struct list_elem elem;  /* List element struct */
 };
@@ -39,6 +40,8 @@ static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
+static bool less_ticks (const struct list_elem *n_elem, const struct list_elem *e, 
+                        void *aux UNUSED);
 
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
@@ -95,6 +98,18 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
+/* Auxiliar function to list_insert_ordered in timer_sleep. 
+   Returns true if n_elem has to be unblocked before (or in 
+   the same tick) than e. */
+static bool 
+less_ticks (const struct list_elem *n_elem, const struct list_elem *e, 
+            void *aux UNUSED)
+{
+  struct thread_sleep *ts_elem = list_entry (n_elem, struct thread_sleep, elem);
+  struct thread_sleep *ts_e = list_entry (e, struct thread_sleep, elem);
+  return ts_elem->unblock_tick <= ts_e->unblock_tick;
+}
+
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
 void
@@ -104,11 +119,10 @@ timer_sleep (int64_t ticks)
 
   ASSERT (intr_get_level () == INTR_ON);
 
-  // struct thread *t = thread_current ();
-  // t->sleep_ticks = ticks;
-  // list_push_back (&blocked_list, &t->elem);
-  struct thread_sleep ts = { .t = thread_current(), .tiks = ticks };
-  list_push_back (&blocked_list, &ts.elem);
+  struct thread_sleep ts = { .t = thread_current(), 
+                             .unblock_tick = timer_ticks() + ticks };
+
+  list_insert_ordered (&blocked_list, &ts.elem, less_ticks, NULL);
   enum intr_level old_level = intr_disable ();
   thread_block ();
   intr_set_level (old_level);
@@ -190,21 +204,16 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   struct list_elem *e = list_begin (&blocked_list);
 
+  ticks++;
+  thread_tick ();
+
   while (e != list_end (&blocked_list))
   {
     struct thread_sleep *ts = list_entry (e, struct thread_sleep, elem);
-
-    if (--ts->tiks > 0)
-    {
-      e = list_next (e);
-    } else {
-      e = list_remove (e);
-      thread_unblock (ts->t);
-    }
+    if (ts->unblock_tick > timer_ticks ()) break;
+    e = list_remove (e);
+    thread_unblock (ts->t);
   }
-
-  ticks++;
-  thread_tick ();
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
