@@ -119,9 +119,9 @@ timer_sleep (int64_t ticks)
 
   ASSERT (intr_get_level () == INTR_ON);
 
-  struct thread_sleep ts = { .t = thread_current(), 
-                             .unblock_tick = timer_ticks() + ticks };
-
+  struct thread_sleep ts;
+  ts.unblock_tick = timer_ticks () + ticks;
+  ts.t = thread_current ();
   list_insert_ordered (&blocked_list, &ts.elem, less_ticks, NULL);
   enum intr_level old_level = intr_disable ();
   thread_block ();
@@ -203,13 +203,14 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   struct list_elem *e = list_begin (&blocked_list);
+  struct thread_sleep *ts;
 
   ticks++;
   thread_tick ();
 
   while (e != list_end (&blocked_list))
   {
-    struct thread_sleep *ts = list_entry (e, struct thread_sleep, elem);
+    ts = list_entry (e, struct thread_sleep, elem);
     if (ts->unblock_tick > timer_ticks ()) break;
     e = list_remove (e);
     thread_unblock (ts->t);
