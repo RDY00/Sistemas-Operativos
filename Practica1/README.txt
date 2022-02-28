@@ -1,26 +1,24 @@
+INTEGRANTES DEL EQUIPO:
+* Fernando Márquez Pérez
+* Juan Antonio Jasso Oviedo
 
-Integrantes del Equipo:
+PREGUNTAS Y RESPUESTAS:
 
-1.Fernando Márquez Pérez.
-2.Juan Antonio Jasso Oviedo.
+1. Pintos ocupa la función switch_threads para cambiar del procesador el hilo actual por otro, describe los pasos que se llevan a cabo en esta función. (La función se implementa en el archivo (src/threads/switch.S).
 
-Preguntas y Respuestas:
-1.Pintos ocupa la función switch_threads para cambiar del procesador el hilo actual por otro, des-
-cribe los pasos que se llevan a cabo en esta función. (La función se implementa en el archivo (src/threads/switch.S).
+R: Intercambia los contextos del hilo actual con el siguiente: 
+* Primero se guardan en el stack los registros importantes del contexto del hilo actual (ebx, ebp, esi, di) para que pueda reaundar su ejecución donde se quedo cuando vuelva a ejecutarse. 
+* Después de guarda el stack pointer del hilo actual (almacenado en su bloque de control) y se recupera el del nuevo hilo. Asímismo, de su stack se recupera el estado de sus registros para que pueda reaundar su ejecución donde se había quedado (o a empezar si era nuevo).
+* Por último se inicia el nuevo hilo. Se pide que ambos estén ejecutando la función para poder guardar registros al stack, intercambiar estos stacks y recuperar la nueva información de ellos.
 
-R: Para cambiar un hilo por otro basicamente se busca quitarle el CPU al hilo actual para darselo al nuevo. Para lograr lo anterior los apuntadores de registros importantes (ebp,esi,ebx,edi) de la pila o stack, pasan a la stack o pila del nuevo proceso y finalmente ya el CPU y los registros importantes están en la pila del nuevo proceso(que ahora ya es el proceso actual).
+2. ¿Para qué sirve el stack de un proceso?
 
-
-2.¿Para qué sirve el stack de un proceso?
-
-R: Para guardar o almacenar las variables locales y los saltos que realizan las funciones.
-
+R: Para guardar o almacenar información local del proceso, como son: las variables locales, las llamadas/saltos de la funciones y el estado del mismo proceso.
 
 3.¿Qué diferencia hay entre el thread idle y el thread main?
 
-R: El hilo main inicializa muchos del resto de hilos para que un Kernel funciones, sin embargo el hilo Idle(ocioso o flojo) se usa para que cualquier evento como una presión de una tecla en un teclado o el movimiento del mouse sea cachado por él, es uno que aunque no es el main nunca se bloquea o duerme.
+R: El hilo main es el primer hilo que se crea y es quien inicializa a otros hilos para que el Kernel funcione. El hilo idle (ocioso o flojo), por otro lado, es el hilo encargado de manejar ciertos eventos, como una presión de una tecla en un teclado o el movimiento del mouse, este hilo es particular en el sentido de que nunca se duerme pero nunca esta "totalmente activo" (está en un estado de halt) y siempre queda como el hilo en ejecución cuando no hay más hilos o cuando todos están bloqueados/dormidos.
 
-4.Si suponemos que solamente existe un thread en ejecución y dicho thread se bloquea (utilizando la
-función thread_block). ¿De que forma se podrá despertar el thread si es el único en ejecución?
+4.Si suponemos que solamente existe un thread en ejecución y dicho thread se bloquea (utilizando la función thread_block). ¿De que forma se podrá despertar el thread si es el único en ejecución?
 
-R: La forma más sencilla es usando el thread idle, el cual nunca se bloquea ni duerme, y haciendo que él mismo lleve la cuenta de ticks(unidad que usa el timer para manejar el "tiempo" de los threads) para posteriormente despertarnos.
+R: Como se menciono antes, quien entraría a ejecución en ese casi sería el thread idle y él se encargaría de despertar/desbloquear al hilo bloqueado.
