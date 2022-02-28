@@ -6,9 +6,9 @@ PREGUNTAS Y RESPUESTAS:
 
 1. Pintos ocupa la función switch_threads para cambiar del procesador el hilo actual por otro, describe los pasos que se llevan a cabo en esta función. (La función se implementa en el archivo (src/threads/switch.S).
 
-R: Intercambia los contextos del hilo actual con el siguiente: 
-* Primero se guardan en el stack los registros importantes del contexto del hilo actual (ebx, ebp, esi, di) para que pueda reaundar su ejecución donde se quedo cuando vuelva a ejecutarse. 
-* Después de guarda el stack pointer del hilo actual (almacenado en su bloque de control) y se recupera el del nuevo hilo. Asímismo, de su stack se recupera el estado de sus registros para que pueda reaundar su ejecución donde se había quedado (o a empezar si era nuevo).
+R: Intercambia los contextos del hilo actual con el siguiente:
+* Primero se guardan en el stack los registros importantes del contexto del hilo actual (ebx, ebp, esi, edi) para que pueda reanudar su ejecución donde se quedó, cuando se "despierte".
+* Después de guarda el stack pointer del hilo actual (almacenado en su bloque de control) y se recupera el del nuevo hilo. Así mismo, de su stack se recupera el estado de sus registros para que pueda reaundar su ejecución donde se había quedado (o a empezar si era nuevo).
 * Por último se inicia el nuevo hilo. Se pide que ambos estén ejecutando la función para poder guardar registros al stack, intercambiar estos stacks y recuperar la nueva información de ellos.
 
 2. ¿Para qué sirve el stack de un proceso?
