@@ -2,6 +2,9 @@ INTEGRANTES DEL EQUIPO:
 * Fernando Márquez Pérez
 * Juan Antonio Jasso Oviedo
 
+SOBRE LOS PUNTOS EXTRAS:
+Implementamos ambos puntos, la estructura quedó al inicio de timer.c y usamos la función que ya estaba para listas ordenadas (list_insert_ordered).
+
 PREGUNTAS Y RESPUESTAS:
 
 1. Pintos ocupa la función switch_threads para cambiar del procesador el hilo actual por otro, describe los pasos que se llevan a cabo en esta función. (La función se implementa en el archivo (src/threads/switch.S).
