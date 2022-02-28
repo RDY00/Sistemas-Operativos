@@ -21,7 +21,7 @@
 struct thread_sleep 
 {
   int64_t unblock_tick;   /* Tick in which the thread has to be unblocked */ 
-  struct thread *t;       /* Pointer to control process block of thread */
+  struct thread *t;       /* Pointer to process control block of thread */
   struct list_elem elem;  /* List element struct */
 };
 
