@@ -98,9 +98,8 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
-/* Auxiliar function to list_insert_ordered in timer_sleep.
-   Returns true if n_elem has to be unblocked before (or in
-   the same tick) than e. */
+/* Auxiliar function to use in list_insert_ordered (as parameter) in function timer_sleep.
+   Returns true if n_elem has to be unblocked before (or in the same tick) than e. */
 static bool
 less_ticks (const struct list_elem *n_elem, const struct list_elem *e,
             void *aux UNUSED)
