@@ -3,7 +3,7 @@ INTEGRANTES DEL EQUIPO:
 * Juan Antonio Jasso Oviedo
 
 SOBRE LOS PUNTOS EXTRAS:
-Implementamos ambos puntos, la estructura(thread_sleep) quedó al inicio de timer.c y usamos la función que ya estaba para listas (lib/kernel/list.c) ordenadas (list_insert_ordered).
+Implementamos ambos puntos, la estructura (thread_sleep) quedó al inicio de timer.c y usamos la función que ya estaba para listas (de lib/kernel/list.c) ordenadas (list_insert_ordered).
 
 PREGUNTAS Y RESPUESTAS:
 
