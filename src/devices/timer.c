@@ -18,9 +18,9 @@
 #endif
 
 /* Struct to manage thread sleep ticks */
-struct thread_sleep 
+struct thread_sleep
 {
-  int64_t unblock_tick;   /* Tick in which the thread has to be unblocked */ 
+  int64_t unblock_tick;   /* Tick on which the thread will be unblocked */
   struct thread *t;       /* Pointer to process control block of thread */
   struct list_elem elem;  /* List element struct */
 };
@@ -40,7 +40,7 @@ static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
-static bool less_ticks (const struct list_elem *n_elem, const struct list_elem *e, 
+static bool less_ticks (const struct list_elem *n_elem, const struct list_elem *e,
                         void *aux UNUSED);
 
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
@@ -98,11 +98,11 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
-/* Auxiliar function to list_insert_ordered in timer_sleep. 
-   Returns true if n_elem has to be unblocked before (or in 
+/* Auxiliar function to list_insert_ordered in timer_sleep.
+   Returns true if n_elem has to be unblocked before (or in
    the same tick) than e. */
-static bool 
-less_ticks (const struct list_elem *n_elem, const struct list_elem *e, 
+static bool
+less_ticks (const struct list_elem *n_elem, const struct list_elem *e,
             void *aux UNUSED)
 {
   struct thread_sleep *ts_elem = list_entry (n_elem, struct thread_sleep, elem);
