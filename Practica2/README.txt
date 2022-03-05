@@ -15,3 +15,5 @@ Porque si la sustituyera, al regresar de la interrupt, no sabría el contexto de
 
 
 3. De las dos técnicas para implementar el calendarizador de prioridades: mantener la lista ordenada o buscar el máximo. ¿Cúal es más factible utilizar? y ¿Por qué?.
+
+La de buscar la lista ordenada, ya que eventualmente aunque busquemos el máximo, recorreremos la ready_list totalmente para así obtener si el máximo. Y si tenemos únicamente la lista ordenada, solamente tendríamos que sacar el hilo del tope de la lista(la cabeza en vez del tope).
