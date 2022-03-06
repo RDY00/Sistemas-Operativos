@@ -2,10 +2,9 @@ INTEGRANTES DEL EQUIPO:
 * Fernando Márquez Pérez
 * Juan Antonio Jasso Oviedo
 
+PREGUNTAS Y RESPUESTAS:
 
-Preguntas y Respuestas:
-
-1.En términos de la arquitectura Intel x86 ¿Qué significa que un thread o proceso está en ejecución?
+1. En términos de la arquitectura Intel x86 ¿Qué significa que un thread o proceso está en ejecución?
 
 Significa, que el CPU le está dando recursos para que se pueda ejecutar, memoria, registros, etc. Esto se puede interpretar como que el proceso "tiene control del Procesador".
 
@@ -13,7 +12,6 @@ Significa, que el CPU le está dando recursos para que se pueda ejecutar, memori
 
 Porque si la sustituyera, al regresar de la interrupt, no sabría el contexto del stack de ese nuevo hilo, sea NEXT. Es decir, con mantener el EIP y cambiar el ESP podemos conservar un contexto para que, cuando CUR(current) sea interrumpido NEXT tenga un contexto al cual acceder y el ESP apunte al stack de CUR.
 
-
 3. De las dos técnicas para implementar el calendarizador de prioridades: mantener la lista ordenada o buscar el máximo. ¿Cúal es más factible utilizar? y ¿Por qué?.
 
-La de buscar la lista ordenada, ya que eventualmente aunque busquemos el máximo, recorreremos la ready_list totalmente para así obtener si el máximo. Y si tenemos únicamente la lista ordenada, solamente tendríamos que sacar el hilo del tope de la lista(la cabeza en vez del tope).
+Son equivalentes. Con la lista ordenada podemos obtener al siguiente hilo en tiempo constante pero al insertar tenemos tiempo linear justo porque tenemos que mantener el orden, mientras que para buscar el máximo podemos insertar en tiempo constante, pues no importa el orden de la lista, pero en el peor caso debemos recorrerla toda para obtener el siguiente hilo. Basicamente las complejidades de insersión y borrado se invierten y, como ambas funciones se usan con la misma frecuencia, no importa cuál de los métodos usemos, el desempeño será escencialmente el mismo.
