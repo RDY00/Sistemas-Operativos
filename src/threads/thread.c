@@ -94,7 +94,7 @@ thread_init (void)
 
   lock_init (&tid_lock);
   list_init (&all_list);
-  for (int i = 0; i < PRI_NUM; i++)
+  for (size_t i = 0; i < PRI_NUM; i++)
     list_init (&ready_list[i]);
 
   /* Set up a thread structure for the running thread. */
@@ -501,7 +501,7 @@ alloc_frame (struct thread *t, size_t size)
 static struct thread *
 next_thread_to_run (void)
 {
-  for (int i = PRI_MAX; i >= 0; i--)
+  for (size_t i = PRI_MAX; i >= 0; i--)
   {
     struct list *l = &ready_list[i];
     if (!list_empty (l)) {
