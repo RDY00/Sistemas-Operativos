@@ -53,6 +53,13 @@ static long long idle_ticks;    /* # of timer ticks spent idle. */
 static long long kernel_ticks;  /* # of timer ticks in kernel threads. */
 static long long user_ticks;    /* # of timer ticks in user programs. */
 
+ /*Variables to measure the time a thread's been in control of the CPU.
+And, to implement dinamic priorities.
+ */
+static unsigned int recent_cpu;/*to get the time a thread's been on control.*/
+static unsigned int load_avg; /*to measure the load of the system.*/
+static unsigned int nice; /*to decfadie if the priority should change.*/
+
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
@@ -67,7 +74,7 @@ static void kernel_thread (thread_func *, void *aux);
 static void idle (void *aux UNUSED);
 static struct thread *running_thread (void);
 static struct thread *next_thread_to_run (void);
-static void init_thread (struct thread *, const char *name, int priority);
+static void init_thread (struct thread *, const char *name, int priority/*, int recent_cpu*/);/*<-Como todo hilo debe tener el recent_cpu debe ser creado con el hilo*/
 static bool is_thread (struct thread *) UNUSED;
 static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
@@ -99,7 +106,7 @@ thread_init (void)
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
-  init_thread (initial_thread, "main", PRI_DEFAULT);
+  init_thread (initial_thread, "main", PRI_DEFAULT/*, 0*/);/*<-Aquí el 0 es provisional.*/
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
 }
@@ -165,10 +172,14 @@ thread_print_stats (void)
 
    The code provided sets the new thread's `priority' member to
    PRIORITY, but no actual priority scheduling is implemented.
-   Priority scheduling is the goal of Problem 1-3. */
+   Priority scheduling is the goal of Problem 1-3.
+
+   recent_cpu is created to control how much a thread's been in
+   control of the CPU.
+   */
 tid_t
 thread_create (const char *name, int priority,
-               thread_func *function, void *aux)
+               thread_func *function/*,int recent_cpu*/, void *aux)/*<-ES provisional lo comentado para ver si es correcto así o no.*/
 {
   struct thread *t;
   struct kernel_thread_frame *kf;
@@ -373,7 +384,7 @@ int
 thread_get_nice (void)
 {
   /* Not yet implemented. */
-  return 0;
+  return 0/*thread_current()->nice*/;/*Como nice define si la prioridad baja o aumenta debe ser una caracteristica de cada hilo.*/
 }
 
 /* Returns 100 times the system load average. */
@@ -381,7 +392,7 @@ int
 thread_get_load_avg (void)
 {
   /* Not yet implemented. */
-  return 0;
+  return load_avg;/*Como es global puede ser llamada en cualquier momento.*/
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
@@ -389,7 +400,7 @@ int
 thread_get_recent_cpu (void)
 {
   /* Not yet implemented. */
-  return 0;
+  return 0 /*thread_current()->recent_cpu*/;/*<-Como todo hilo debe tener esta propiedad usamos thread_current.*/
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
