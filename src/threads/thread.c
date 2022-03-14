@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "threads/fixpoint.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -56,9 +57,11 @@ static long long user_ticks;    /* # of timer ticks in user programs. */
  /*Variables to measure the time a thread's been in control of the CPU.
 And, to implement dinamic priorities.
  */
-static unsigned int recent_cpu;/*to get the time a thread's been on control.*/
-static unsigned int load_avg; /*to measure the load of the system.*/
-static unsigned int nice; /*to decfadie if the priority should change.*/
+static unsigned int load_avg = 0;  /* to measure the load of the system. */
+static int load_avg_c1 = FIXPOINT(59, 60);
+static int load_avg_c2 = FIXPOINT(1, 60);
+
+static unsigned int nice;      /* to decide if the priority should change. */
 
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
@@ -134,6 +137,21 @@ void
 thread_tick (void)
 {
   struct thread *t = thread_current ();
+  int64_t ticks = timer_ticks ();
+  if(thread_mlfqs)
+  {
+    bool is_second = ticks % TIMER_FREQ;
+    if(is_second)
+    {
+      int ready_threads = list_size(&ready_list);
+
+      if(t != idle_thread)
+        ready_threads++;
+
+      int ready_threads_fp = FIXPOINT(ready_threads, 1);
+      load_avg = FIXPOINT_PRODUCT(load_avg_c1, load_avg)
+                 + FIXPOINT_PRODUCT(load_avg_c2, ready_threads);
+    }
 
   /* Update statistics. */
   if (t == idle_thread)
@@ -391,8 +409,7 @@ thread_get_nice (void)
 int
 thread_get_load_avg (void)
 {
-  /* Not yet implemented. */
-  return load_avg;/*Como es global puede ser llamada en cualquier momento.*/
+  return FIXPOINT_TO_INT(FIXPOINT_PRODUCT(load_avg, FIXPOINT(100, 1)));
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */

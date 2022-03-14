@@ -208,9 +208,12 @@ timer_interrupt (struct intr_frame *args UNUSED)
   while (e != list_end (&blocked_list))
   {
     ts = list_entry (e, struct thread_sleep, elem);
-    if (ts->unblock_tick > timer_ticks ()) break;
+    if (ts->unblock_tick > timer_ticks ())
+        break;
+        //intr_yield_on_return()
     e = list_remove (e);
     thread_unblock (ts->t);
+    if
   }
 
   thread_tick ();
