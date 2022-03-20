@@ -397,6 +397,22 @@ void
 thread_set_nice (int nice UNUSED)
 {
   /* Not yet implemented. */
+
+  thread_current ()->nice=nice;
+  /*
+  ESTA ES LA PARTE DONDE SE REVISA LA ACTUALIZACIÓN DE LA PRIORIDAD.
+  SEGÚN YO PODRÍA JALAR.JEJEJEJ*/
+
+  struct thread * t = thread_current();
+  update_priority(t,NULL);
+  if(!list_empty(&ready_list))
+  {
+    struct thread* e = list_entry(list_front(&ready_list), struct thread, elem);
+    if(t->priority < e->priority)
+    {
+      thread_yield();
+    }
+  }
 }
 
 /* Returns the current thread's nice value. */
@@ -623,6 +639,28 @@ allocate_tid (void)
   lock_release (&tid_lock);
 
   return tid;
+}
+
+/*
+Auxiliar function to recalculate the priority of a given thread t. This is done after updating the niceness of the given thread.
+*/
+void update_priority(struct thread* t, void *aux)
+{
+  t->priority = PRI_MAX - convert_to_int_round(t->recent_cpu/4) - (t->nice*2);
+  if (t->priority > PRI_MAX)
+    t->priority = PRI_MAX;
+  else if (t->priority < PRI_MIN)
+    t->priority = PRI_MIN;
+}
+
+/*
+Function to calculate the variable recent_cpu using the niceness of a thread and the load_avg of the system.
+
+*/
+void calc_recent_cpu(struct thread* t, void *aux)
+{
+  t->recent_cpu = FIXPOINT_PRODUCT(FIXPOINT_DIVISION(FIXPOINT_PRODUCT(2,load_avg),FIXPOINT_PRODUCT(2,load_avg)+FIXPOINT(1,1)),
+                                  t->recent_cpu+t->nice);
 }
 
 /* Offset of `stack' member within `struct thread'.
