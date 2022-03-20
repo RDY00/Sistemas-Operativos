@@ -213,7 +213,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
         //intr_yield_on_return()
     e = list_remove (e);
     thread_unblock (ts->t);
-    if
+    /*if<-Aquí es donde teníamos duda lo comente pa que compile.*/
   }
 
   thread_tick ();

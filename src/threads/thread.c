@@ -12,6 +12,7 @@
 #include "threads/synch.h"
 #include "threads/vaddr.h"
 #include "threads/fixpoint.h"
+#include "devices/timer.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -77,7 +78,7 @@ static void kernel_thread (thread_func *, void *aux);
 static void idle (void *aux UNUSED);
 static struct thread *running_thread (void);
 static struct thread *next_thread_to_run (void);
-static void init_thread (struct thread *, const char *name, int priority/*, int recent_cpu*/);/*<-Como todo hilo debe tener el recent_cpu debe ser creado con el hilo*/
+static void init_thread (struct thread *, const char *name, int priority);
 static bool is_thread (struct thread *) UNUSED;
 static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
@@ -109,7 +110,7 @@ thread_init (void)
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
-  init_thread (initial_thread, "main", PRI_DEFAULT/*, 0*/);/*<-Aquí el 0 es provisional.*/
+  init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
 }
@@ -152,7 +153,7 @@ thread_tick (void)
       load_avg = FIXPOINT_PRODUCT(load_avg_c1, load_avg)
                  + FIXPOINT_PRODUCT(load_avg_c2, ready_threads);
     }
-
+  }
   /* Update statistics. */
   if (t == idle_thread)
     idle_ticks++;
@@ -166,6 +167,7 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+
 }
 
 /* Prints thread statistics. */
@@ -197,7 +199,7 @@ thread_print_stats (void)
    */
 tid_t
 thread_create (const char *name, int priority,
-               thread_func *function/*,int recent_cpu*/, void *aux)/*<-ES provisional lo comentado para ver si es correcto así o no.*/
+               thread_func *function, void *aux)
 {
   struct thread *t;
   struct kernel_thread_frame *kf;
@@ -402,13 +404,14 @@ int
 thread_get_nice (void)
 {
   /* Not yet implemented. */
-  return 0/*thread_current()->nice*/;/*Como nice define si la prioridad baja o aumenta debe ser una caracteristica de cada hilo.*/
+  return thread_current()->nice;
 }
 
 /* Returns 100 times the system load average. */
 int
 thread_get_load_avg (void)
 {
+  /* Not yet implemented.*/
   return FIXPOINT_TO_INT(FIXPOINT_PRODUCT(load_avg, FIXPOINT(100, 1)));
 }
 
@@ -417,7 +420,7 @@ int
 thread_get_recent_cpu (void)
 {
   /* Not yet implemented. */
-  return 0 /*thread_current()->recent_cpu*/;/*<-Como todo hilo debe tener esta propiedad usamos thread_current.*/
+  return FIXPOINT_TO_INT(FIXPOINT_PRODUCT(thread_current()->recent_cpu ,FIXPOINT(100, 1)));
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
