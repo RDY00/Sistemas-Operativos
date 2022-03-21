@@ -204,6 +204,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
   struct list_elem *e = list_begin (&blocked_list);
   struct thread_sleep *ts;
   ticks++;
+  thread_tick ();
 
   while (e != list_end (&blocked_list))
   {
@@ -212,8 +213,6 @@ timer_interrupt (struct intr_frame *args UNUSED)
     e = list_remove (e);
     thread_unblock (ts->t);
   }
-
-  thread_tick ();
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

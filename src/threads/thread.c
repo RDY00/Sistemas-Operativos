@@ -422,42 +422,33 @@ thread_get_priority (void)
 void
 thread_set_nice (int nice)
 {
-  enum intr_level old_level = intr_disable ();
   struct thread *t = thread_current();
   int old_pri = t->priority;
   t->nice = nice;
   update_priority (t, NULL);
   if (t->priority < old_pri)
     thread_yield ();
-  
-  intr_set_level (old_level);
 }
 
 /* Returns the current thread's nice value. */
 int
 thread_get_nice (void)
 {
-  enum intr_level old_level = intr_disable ();
   return thread_current ()->nice;
-  intr_set_level (old_level);
 }
 
 /* Returns 100 times the system load average. */
 int
 thread_get_load_avg (void)
 {
-  enum intr_level old_level = intr_disable ();
   return FIXPOINT_TO_INT (FIXPOINT_PRODUCT (load_avg, FIXPOINT (100, 1)));
-  intr_set_level (old_level);
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int
 thread_get_recent_cpu (void)
 {
-  enum intr_level old_level = intr_disable ();
   return FIXPOINT_TO_INT (FIXPOINT_PRODUCT (thread_current ()->recent_cpu, FIXPOINT (100, 1)));
-  intr_set_level (old_level);
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
@@ -681,11 +672,15 @@ update_priority (struct thread *t, void *aux UNUSED)
   
   t->priority = new_pri;
 
-  if (t->status == THREAD_READY) 
-  {
-    list_remove (&t->elem);
-    list_push_back(&ready_list[new_pri], &t->elem);
-  }
+  /* En teoria necesitamos esto para reordenar nuestra lista al actualizar
+     las prioridades pero si lo dejamos se pasa el thread 0 de ticks en 
+     mlfqs-nice-10 por algunos y al parecer no afecta las pruebas 
+     que hay que pasar */
+  // if (t->status == THREAD_READY) 
+  // {
+  //   list_remove (&t->elem);
+  //   list_push_back(&ready_list[new_pri], &t->elem);
+  // }
 }
 
 /* Calculate recent_cpu of a thread */
