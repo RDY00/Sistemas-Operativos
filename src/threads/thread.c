@@ -141,8 +141,8 @@ thread_tick (void)
     if (timer_ticks () % TIMER_FREQ == 0)
     {
       int ready_threads = 0;
-      
-      for (int i = 0; i < PRI_NUM; i++) 
+
+      for (int i = 0; i < PRI_NUM; i++)
         ready_threads += list_size (&ready_list[i]);
 
       if(t != idle_thread)
@@ -642,14 +642,14 @@ allocate_tid (void)
 /*
 Auxiliar function to recalculate the priority of a given thread t. This is done after updating the niceness of the given thread.
 */
-// void update_priority(struct thread* t, void *aux)
-// {
-//   t->priority = PRI_MAX - convert_to_int_round(t->recent_cpu/4) - (t->nice*2);
-//   if (t->priority > PRI_MAX)
-//     t->priority = PRI_MAX;
-//   else if (t->priority < PRI_MIN)
-//     t->priority = PRI_MIN;
-// }
+void update_priority(struct thread* t, void *aux)
+ {
+   t->priority = PRI_MAX - FIXPOINT_TO_INT(FIXPOINT_DIVISION(t->recent_cpu,FIXPOINT(4,1))) -(2 * FIXPOINT_TO_INT(t->nice));
+   if (t->priority > PRI_MAX)
+     t->priority = PRI_MAX;
+   else if (t->priority < PRI_MIN)
+     t->priority = PRI_MIN;
+ }
 
 /*
 Function to calculate the variable recent_cpu using the niceness of a thread and the load_avg of the system.
