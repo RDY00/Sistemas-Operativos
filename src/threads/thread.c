@@ -162,11 +162,11 @@ thread_tick (void)
       thread_foreach (&calc_recent_cpu, NULL);
     }
 
-    /* Update priority */
-    // if (timer_ticks () % 4 == 0) {
-    //   thread_foreach (&update_priority, NULL);
-    //   intr_yield_on_return ();
-    // }
+    /* Update priority every 4 ticks */
+    if (timer_ticks () % 4 == 0) {
+      thread_foreach (&update_priority, NULL);
+      thread_yield ();
+    }
   }
 
   /* Update statistics. */
@@ -231,6 +231,7 @@ thread_create (const char *name, int priority,
 
   /* Initialize thread. */
   init_thread (t, name, priority);
+  t->nice = thread_current ()->nice;
   tid = t->tid = allocate_tid ();
 
   /* Prepare thread for first run by initializing its stack.
