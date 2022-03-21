@@ -56,9 +56,9 @@ static long long idle_ticks;    /* # of timer ticks spent idle. */
 static long long kernel_ticks;  /* # of timer ticks in kernel threads. */
 static long long user_ticks;    /* # of timer ticks in user programs. */
 
-static int load_avg = 0;  /* load of the system. */
-static int load_avg_c1 = FIXPOINT(59, 60);
-static int load_avg_c2 = FIXPOINT(1, 60);
+static int load_avg;  /* load of the system. */
+static int load_avg_c1;
+static int load_avg_c2;
 
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
@@ -107,6 +107,10 @@ thread_init (void)
   for (int i = 0; i < PRI_NUM; i++)
     list_init (&ready_list[i]);
 
+  load_avg = 0;
+  load_avg_c1 = FIXPOINT (59, 60);
+  load_avg_c2 = FIXPOINT (1, 60);
+
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
@@ -144,9 +148,16 @@ thread_tick (void)
     if(t != idle_thread)
       t->recent_cpu += FIXPOINT(1,1);
 
+    /* Update priority every 4 ticks */
+    if (ticks % TIME_SLICE == 0) 
+      thread_foreach (update_priority, NULL);
+
     /* Per second */
     if (ticks % TIMER_FREQ == 0)
     {
+      /* Update recent_cpu */
+      thread_foreach (calc_recent_cpu, NULL);
+
       /* Calculate load average */
       int ready_threads = ready_list_size;
 
@@ -156,15 +167,7 @@ thread_tick (void)
       int ready_threads_fp = FIXPOINT (ready_threads, 1);
       load_avg = FIXPOINT_PRODUCT (load_avg_c1, load_avg)
                  + FIXPOINT_PRODUCT (load_avg_c2, ready_threads_fp);
-
-      /* Update recent_cpu */
-      thread_foreach (calc_recent_cpu, NULL);
-      
     }
-
-    /* Update priority every 4 ticks */
-    if (ticks % TIME_SLICE == 3) 
-      thread_foreach (update_priority, NULL);
   }
 
   /* Update statistics. */
@@ -399,6 +402,7 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority)
 {
+  if (thread_mlfqs) return; 
   struct thread *t = thread_current ();
   int old_priority = t->priority;
   t->priority = new_priority;
@@ -419,9 +423,11 @@ void
 thread_set_nice (int nice)
 {
   struct thread *t = thread_current();
+  int old_pri = t->priority;
   t->nice = nice;
   update_priority (t, NULL);
-  thread_yield ();
+  if (t->priority > old_pri)
+    thread_yield ();
 }
 
 /* Returns the current thread's nice value. */
@@ -530,17 +536,8 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
-
-  /* Initialize nice and recent_cpu */  
-  if (thread_mlfqs)
-  {
-    t->nice = 0;
-    if (t == initial_thread)
-      t->recent_cpu = 0;
-    else
-      t->recent_cpu = FIXPOINT_PRODUCT (thread_current ()->recent_cpu, FIXPOINT(100,1));
-  }
-
+  t->nice = 0;
+  t->recent_cpu = 0;
   list_push_back (&all_list, &t->allelem);
 }
 
@@ -663,6 +660,8 @@ allocate_tid (void)
 static void 
 update_priority (struct thread *t, void *aux UNUSED)
 {
+  if (t == idle_thread) return;
+
   int div = FIXPOINT_TO_INT (FIXPOINT_DIVISION (t->recent_cpu, FIXPOINT (4,1)));
   int new_pri = PRI_MAX - div - (2 * t->nice);
 
@@ -684,6 +683,8 @@ update_priority (struct thread *t, void *aux UNUSED)
 static void 
 calc_recent_cpu (struct thread *t, void *aux UNUSED)
 {
+  if (t == idle_thread) return;
+
   int prod = FIXPOINT_PRODUCT (FIXPOINT (2,1), load_avg);
   int a = FIXPOINT_DIVISION (prod, prod + FIXPOINT (1,1));
 
