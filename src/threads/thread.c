@@ -163,10 +163,8 @@ thread_tick (void)
     }
 
     /* Update priority every 4 ticks */
-    if (timer_ticks () % 4 == 0) {
+    if (timer_ticks () % 4 == 0)
       thread_foreach (&update_priority, NULL);
-      thread_yield ();
-    }
   }
 
   /* Update statistics. */
