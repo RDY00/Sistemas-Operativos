@@ -139,6 +139,9 @@ thread_tick (void)
 
   if (thread_mlfqs)
   {
+
+    thread_current ()->recent_cpu += FIXPOINT(1,1);
+
     /* Per second */
     if (timer_ticks () % TIMER_FREQ == 0)
     {
@@ -156,7 +159,6 @@ thread_tick (void)
                  + FIXPOINT_PRODUCT (load_avg_c2, ready_threads_fp);
 
       /* Update recent_cpu */
-      thread_current ()->recent_cpu += FIXPOINT(1,1);
       thread_foreach (&calc_recent_cpu, NULL);
     }
 
