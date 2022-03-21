@@ -156,14 +156,15 @@ thread_tick (void)
                  + FIXPOINT_PRODUCT (load_avg_c2, ready_threads_fp);
 
       /* Update recent_cpu */
+      thread_current ()->recent_cpu += FIXPOINT(1,1);
       thread_foreach (&calc_recent_cpu, NULL);
     }
 
     /* Update priority */
-    if (timer_ticks () % 4 == 0) {
-      thread_foreach (&update_priority, NULL);
-      intr_yield_on_return ();
-    }
+    // if (timer_ticks () % 4 == 0) {
+    //   thread_foreach (&update_priority, NULL);
+    //   intr_yield_on_return ();
+    // }
   }
 
   /* Update statistics. */
@@ -405,25 +406,12 @@ thread_get_priority (void)
 
 /* Sets the current thread's nice value to NICE. */
 void
-thread_set_nice (int nice UNUSED)
+thread_set_nice (int nice)
 {
-  /* Not yet implemented. */
-
-  // thread_current ()->nice=nice;
-  // /*
-  // ESTA ES LA PARTE DONDE SE REVISA LA ACTUALIZACIÓN DE LA PRIORIDAD.
-  // SEGÚN YO PODRÍA JALAR.JEJEJEJ*/
-
-  // struct thread * t = thread_current();
-  // update_priority(t,NULL);
-  // if(!list_empty(&ready_list))
-  // {
-  //   struct thread* e = list_entry(list_front(&ready_list), struct thread, elem);
-  //   if(t->priority < e->priority)
-  //   {
-  //     thread_yield();
-  //   }
-  // }
+  struct thread *t = thread_current();
+  t->nice = nice;
+  update_priority (t, NULL);
+  thread_yield ();
 }
 
 /* Returns the current thread's nice value. */
@@ -532,7 +520,8 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
-  t->nice = running_thread ()->nice;
+  t->recent_cpu = 0;
+  t->nice = 0;
   list_push_back (&all_list, &t->allelem);
 }
 
