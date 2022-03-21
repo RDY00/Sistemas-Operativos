@@ -203,20 +203,23 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   struct list_elem *e = list_begin (&blocked_list);
   struct thread_sleep *ts;
+  // struct thread *current = thread_current ();
   ticks++;
+  thread_tick ();
 
   while (e != list_end (&blocked_list))
   {
     ts = list_entry (e, struct thread_sleep, elem);
+
     if (ts->unblock_tick > timer_ticks ())
-        break;
-        //intr_yield_on_return()
+      break;
+
     e = list_remove (e);
     thread_unblock (ts->t);
-    /*if<-Aquí es donde teníamos duda lo comente pa que compile.*/
-  }
 
-  thread_tick ();
+    // if (ts->t->priority > current->priority)
+    //   intr_yield_on_return ();
+  }
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
