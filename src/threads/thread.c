@@ -55,10 +55,7 @@ static long long idle_ticks;    /* # of timer ticks spent idle. */
 static long long kernel_ticks;  /* # of timer ticks in kernel threads. */
 static long long user_ticks;    /* # of timer ticks in user programs. */
 
- /*Variables to measure the time a thread's been in control of the CPU.
-And, to implement dinamic priorities.
- */
-static unsigned int load_avg = 0;  /* to measure the load of the system. */
+static unsigned int load_avg = 0;  /* load of the system. */
 static int load_avg_c1 = FIXPOINT(59, 60);
 static int load_avg_c2 = FIXPOINT(1, 60);
 
@@ -138,22 +135,25 @@ void
 thread_tick (void)
 {
   struct thread *t = thread_current ();
-  int64_t ticks = timer_ticks ();
-  if(thread_mlfqs)
+
+  if (thread_mlfqs)
   {
-    bool is_second = ticks % TIMER_FREQ;
-    if(is_second)
+    if (timer_ticks () % TIMER_FREQ == 0)
     {
-      int ready_threads = list_size(&ready_list);
+      int ready_threads = 0;
+      
+      for (int i = 0; i < PRI_NUM; i++) 
+        ready_threads += list_size (&ready_list[i]);
 
       if(t != idle_thread)
         ready_threads++;
 
-      int ready_threads_fp = FIXPOINT(ready_threads, 1);
-      load_avg = FIXPOINT_PRODUCT(load_avg_c1, load_avg)
-                 + FIXPOINT_PRODUCT(load_avg_c2, ready_threads);
+      int ready_threads_fp = FIXPOINT (ready_threads, 1);
+      load_avg = FIXPOINT_PRODUCT (load_avg_c1, load_avg)
+                 + FIXPOINT_PRODUCT (load_avg_c2, ready_threads_fp);
     }
   }
+
   /* Update statistics. */
   if (t == idle_thread)
     idle_ticks++;
@@ -167,7 +167,6 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
-
 }
 
 /* Prints thread statistics. */
@@ -398,21 +397,21 @@ thread_set_nice (int nice UNUSED)
 {
   /* Not yet implemented. */
 
-  thread_current ()->nice=nice;
-  /*
-  ESTA ES LA PARTE DONDE SE REVISA LA ACTUALIZACIÓN DE LA PRIORIDAD.
-  SEGÚN YO PODRÍA JALAR.JEJEJEJ*/
+  // thread_current ()->nice=nice;
+  // /*
+  // ESTA ES LA PARTE DONDE SE REVISA LA ACTUALIZACIÓN DE LA PRIORIDAD.
+  // SEGÚN YO PODRÍA JALAR.JEJEJEJ*/
 
-  struct thread * t = thread_current();
-  update_priority(t,NULL);
-  if(!list_empty(&ready_list))
-  {
-    struct thread* e = list_entry(list_front(&ready_list), struct thread, elem);
-    if(t->priority < e->priority)
-    {
-      thread_yield();
-    }
-  }
+  // struct thread * t = thread_current();
+  // update_priority(t,NULL);
+  // if(!list_empty(&ready_list))
+  // {
+  //   struct thread* e = list_entry(list_front(&ready_list), struct thread, elem);
+  //   if(t->priority < e->priority)
+  //   {
+  //     thread_yield();
+  //   }
+  // }
 }
 
 /* Returns the current thread's nice value. */
@@ -427,7 +426,6 @@ thread_get_nice (void)
 int
 thread_get_load_avg (void)
 {
-  /* Not yet implemented.*/
   return FIXPOINT_TO_INT(FIXPOINT_PRODUCT(load_avg, FIXPOINT(100, 1)));
 }
 
@@ -644,14 +642,14 @@ allocate_tid (void)
 /*
 Auxiliar function to recalculate the priority of a given thread t. This is done after updating the niceness of the given thread.
 */
-void update_priority(struct thread* t, void *aux)
-{
-  t->priority = PRI_MAX - convert_to_int_round(t->recent_cpu/4) - (t->nice*2);
-  if (t->priority > PRI_MAX)
-    t->priority = PRI_MAX;
-  else if (t->priority < PRI_MIN)
-    t->priority = PRI_MIN;
-}
+// void update_priority(struct thread* t, void *aux)
+// {
+//   t->priority = PRI_MAX - convert_to_int_round(t->recent_cpu/4) - (t->nice*2);
+//   if (t->priority > PRI_MAX)
+//     t->priority = PRI_MAX;
+//   else if (t->priority < PRI_MIN)
+//     t->priority = PRI_MIN;
+// }
 
 /*
 Function to calculate the variable recent_cpu using the niceness of a thread and the load_avg of the system.
