@@ -59,8 +59,6 @@ static unsigned int load_avg = 0;  /* load of the system. */
 static int load_avg_c1 = FIXPOINT(59, 60);
 static int load_avg_c2 = FIXPOINT(1, 60);
 
-static unsigned int nice;      /* to decide if the priority should change. */
-
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
@@ -81,6 +79,9 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
+
+static void update_priority (struct thread *, void *);
+static void calc_recent_cpu (struct thread *, void *);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -138,8 +139,10 @@ thread_tick (void)
 
   if (thread_mlfqs)
   {
+    /* Per second */
     if (timer_ticks () % TIMER_FREQ == 0)
     {
+      /* Calculate load average */
       int ready_threads = 0;
 
       for (int i = 0; i < PRI_NUM; i++)
@@ -151,6 +154,15 @@ thread_tick (void)
       int ready_threads_fp = FIXPOINT (ready_threads, 1);
       load_avg = FIXPOINT_PRODUCT (load_avg_c1, load_avg)
                  + FIXPOINT_PRODUCT (load_avg_c2, ready_threads_fp);
+
+      /* Update recent_cpu */
+      thread_foreach (&calc_recent_cpu, NULL);
+    }
+
+    /* Update priority */
+    if (timer_ticks () % 4 == 0) {
+      thread_foreach (&update_priority, NULL);
+      intr_yield_on_return ();
     }
   }
 
@@ -418,7 +430,6 @@ thread_set_nice (int nice UNUSED)
 int
 thread_get_nice (void)
 {
-  /* Not yet implemented. */
   return thread_current()->nice;
 }
 
@@ -426,15 +437,14 @@ thread_get_nice (void)
 int
 thread_get_load_avg (void)
 {
-  return FIXPOINT_TO_INT(FIXPOINT_PRODUCT(load_avg, FIXPOINT(100, 1)));
+  return FIXPOINT_TO_INT (FIXPOINT_PRODUCT (load_avg, FIXPOINT (100, 1)));
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int
 thread_get_recent_cpu (void)
 {
-  /* Not yet implemented. */
-  return FIXPOINT_TO_INT(FIXPOINT_PRODUCT(thread_current()->recent_cpu ,FIXPOINT(100, 1)));
+  return FIXPOINT_TO_INT (FIXPOINT_PRODUCT (thread_current ()->recent_cpu, FIXPOINT (100, 1)));
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
@@ -522,6 +532,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+  t->nice = running_thread ()->nice;
   list_push_back (&all_list, &t->allelem);
 }
 
@@ -639,26 +650,37 @@ allocate_tid (void)
   return tid;
 }
 
-/*
-Auxiliar function to recalculate the priority of a given thread t. This is done after updating the niceness of the given thread.
-*/
-void update_priority(struct thread* t, void *aux)
- {
-   t->priority = PRI_MAX - FIXPOINT_TO_INT(FIXPOINT_DIVISION(t->recent_cpu,FIXPOINT(4,1))) -(2 * FIXPOINT_TO_INT(t->nice));
-   if (t->priority > PRI_MAX)
-     t->priority = PRI_MAX;
-   else if (t->priority < PRI_MIN)
-     t->priority = PRI_MIN;
- }
-
-/*
-Function to calculate the variable recent_cpu using the niceness of a thread and the load_avg of the system.
-
-*/
-void calc_recent_cpu(struct thread* t, void *aux)
+/* Recalculate priority of t. */
+static void 
+update_priority (struct thread *t, void *aux UNUSED)
 {
-  t->recent_cpu = FIXPOINT_PRODUCT(FIXPOINT_DIVISION(FIXPOINT_PRODUCT(2,load_avg),FIXPOINT_PRODUCT(2,load_avg)+FIXPOINT(1,1)),
-                                  t->recent_cpu+t->nice);
+  int div = FIXPOINT_TO_INT (FIXPOINT_DIVISION (t->recent_cpu, FIXPOINT (4,1)));
+  int nicev = 2 * FIXPOINT_TO_INT (t->nice);
+  int new_pri = PRI_MAX - div - nicev;
+
+  if (new_pri > PRI_MAX)
+    new_pri = PRI_MAX;
+  else if (new_pri < PRI_MIN)
+    new_pri = PRI_MIN;
+  
+  t->priority = new_pri;
+
+  if (t->status == THREAD_READY) {
+    list_remove (&t->elem);
+    list_push_back(&ready_list[t->priority], &t->elem);
+  }
+}
+
+/* Calculate recent_cpu of a thread */
+static void 
+calc_recent_cpu (struct thread *t, void *aux UNUSED)
+{
+  uint32_t a = FIXPOINT_DIVISION (
+    FIXPOINT_PRODUCT (FIXPOINT (2,1), load_avg), 
+    FIXPOINT_PRODUCT (FIXPOINT (2,1), load_avg) + FIXPOINT (1,1)
+  );
+
+  t->recent_cpu = FIXPOINT_PRODUCT(a, t->recent_cpu) + t->nice;
 }
 
 /* Offset of `stack' member within `struct thread'.
