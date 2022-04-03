@@ -149,7 +149,7 @@ thread_tick (void)
       t->recent_cpu += FIXPOINT(1,1);
 
     /* Update priority every 4 ticks */
-    if (ticks % TIME_SLICE == 0) 
+    if (ticks % TIME_SLICE == 0)
       thread_foreach (update_priority, NULL);
 
     /* Per second */
@@ -370,7 +370,7 @@ thread_yield (void)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
-  if (cur != idle_thread) 
+  if (cur != idle_thread)
   {
     list_push_back (&ready_list[cur->priority], &cur->elem);
     ready_list_size++;
@@ -402,13 +402,23 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority)
 {
-  if (thread_mlfqs) return; 
-  struct thread *t = thread_current ();
-  int old_priority = t->priority;
-  t->priority = new_priority;
+  struct thread* t = thread_current();
 
-  if (old_priority > new_priority)
-    thread_yield ();
+  if(t-<priority_old == 0)
+  {
+
+    if (thread_mlfqs) return;
+    struct thread *t = thread_current ();
+    int old_priority = t->priority;
+    t->priority = new_priority;
+
+
+    if (old_priority > new_priority)
+      thread_yield ();
+  }else
+  {
+    t->priority_old = new_priority;
+  }
 }
 
 /* Returns the current thread's priority. */
@@ -657,7 +667,7 @@ allocate_tid (void)
 }
 
 /* Recalculate priority of t. */
-static void 
+static void
 update_priority (struct thread *t, void *aux UNUSED)
 {
   if (t == idle_thread) return;
@@ -669,14 +679,14 @@ update_priority (struct thread *t, void *aux UNUSED)
     new_pri = PRI_MAX;
   else if (new_pri < PRI_MIN)
     new_pri = PRI_MIN;
-  
+
   t->priority = new_pri;
 
   /* En teoria necesitamos esto para reordenar nuestra lista al actualizar
-     las prioridades pero si lo dejamos se pasa el thread 0 de ticks en 
-     mlfqs-nice-10 por algunos y al parecer no afecta las pruebas 
+     las prioridades pero si lo dejamos se pasa el thread 0 de ticks en
+     mlfqs-nice-10 por algunos y al parecer no afecta las pruebas
      que hay que pasar */
-  // if (t->status == THREAD_READY) 
+  // if (t->status == THREAD_READY)
   // {
   //   list_remove (&t->elem);
   //   list_push_back(&ready_list[new_pri], &t->elem);
@@ -684,7 +694,7 @@ update_priority (struct thread *t, void *aux UNUSED)
 }
 
 /* Calculate recent_cpu of a thread */
-static void 
+static void
 calc_recent_cpu (struct thread *t, void *aux UNUSED)
 {
   if (t == idle_thread) return;
