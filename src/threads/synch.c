@@ -207,8 +207,11 @@ lock_acquire (struct lock *lock)
   struct thread *t = thread_current();
   if(lock->holder != NULL && lock->holder.priority < t->priority)
   {
-    lock->holder->priority_old = lock->holder->priority;
-    lock->holder->priority = t->priority;
+    lock->ancient_priority = lock->holder->priority;
+    if (lock->donation_counter == 0)
+      lock->holder->priority_old = lock->holder->priority;
+
+    lock->donation_counter++;
   }
 
   sema_down (&lock->semaphore);
@@ -246,11 +249,17 @@ lock_release (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
 
-  if(lock->holder->priority_old != 0)
+  lock->donation_counter--;
+
+  if (lock->holder->donation_counter != 0)
+  {
+    lock->holder->priority = lock->ancient_priority;
+  } else
   {
     lock->holder->priority = lock->holder->priority_old;
-    lock->holder->priority_old = 0;
+    lock->holder->priority_old = -1;
   }
+
   lock->holder = NULL;
   sema_up (&lock->semaphore);
 }

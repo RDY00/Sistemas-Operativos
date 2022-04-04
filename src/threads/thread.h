@@ -92,6 +92,9 @@ struct thread
     int recent_cpu;            /* CPU time. */
     int nice;                  /* Niceness. */
 
+    int priority_old;          /* PRIORITY before donation. */
+    int donation_counter;      /* Counter for donation. */
+    
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 

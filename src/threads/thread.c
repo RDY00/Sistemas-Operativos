@@ -404,21 +404,21 @@ thread_set_priority (int new_priority)
 {
   struct thread* t = thread_current();
 
-  if(t-<priority_old == 0)
-  {
+  if (thread_mlfqs) return;
 
-    if (thread_mlfqs) return;
-    struct thread *t = thread_current ();
-    int old_priority = t->priority;
-    t->priority = new_priority;
-
-
-    if (old_priority > new_priority)
-      thread_yield ();
-  }else
+  if(t->priority_old != -1)
   {
     t->priority_old = new_priority;
+    return;
   }
+
+  struct thread *t = thread_current ();
+  int old_priority = t->priority;
+  t->priority = new_priority;
+
+
+  if (old_priority > new_priority)
+    thread_yield ();
 }
 
 /* Returns the current thread's priority. */
@@ -547,6 +547,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   t->nice = 0;
+  t->priority_old = -1;
   t->recent_cpu = 0;
   list_push_back (&all_list, &t->allelem);
 }
