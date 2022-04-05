@@ -257,7 +257,9 @@ thread_create (const char *name, int priority,
   intr_set_level (old_level);
 
   /* Add to run queue. */
-  update_priority(t, NULL);
+  if (thread_mlfqs)
+    update_priority(t, NULL);
+
   thread_unblock (t);
 
   if (t->priority > thread_current ()->priority)
@@ -406,7 +408,7 @@ thread_set_priority (int new_priority)
 
   if (thread_mlfqs) return;
 
-  if(t->priority_old != -1)
+  if(t->donation_counter > 0)
   {
     t->priority_old = new_priority;
     return;
@@ -414,7 +416,6 @@ thread_set_priority (int new_priority)
   
   int old_priority = t->priority;
   t->priority = new_priority;
-
 
   if (old_priority > new_priority)
     thread_yield ();
@@ -547,6 +548,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   t->nice = 0;
   t->priority_old = -1;
+  t->donation_counter = 0;
   t->recent_cpu = 0;
   list_push_back (&all_list, &t->allelem);
 }
