@@ -402,7 +402,7 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority)
 {
-  struct thread* t = thread_current();
+  struct thread *t = thread_current();
 
   if (thread_mlfqs) return;
 
@@ -411,8 +411,7 @@ thread_set_priority (int new_priority)
     t->priority_old = new_priority;
     return;
   }
-
-  struct thread *t = thread_current ();
+  
   int old_priority = t->priority;
   t->priority = new_priority;
 

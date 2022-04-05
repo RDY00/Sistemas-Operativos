@@ -91,10 +91,10 @@ struct thread
     struct list_elem allelem;           /* List element for all threads list. */
     int recent_cpu;            /* CPU time. */
     int nice;                  /* Niceness. */
+    int donation_counter;      /* Counter for donations. */
 
     int priority_old;          /* PRIORITY before donation. */
-    int donation_counter;      /* Counter for donation. */
-    
+
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 

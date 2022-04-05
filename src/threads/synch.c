@@ -205,10 +205,10 @@ lock_acquire (struct lock *lock)
   ASSERT (!lock_held_by_current_thread (lock));
 
   struct thread *t = thread_current();
-  if(lock->holder != NULL && lock->holder.priority < t->priority)
+  if(lock->holder != NULL && lock->holder->priority < t->priority)
   {
     lock->ancient_priority = lock->holder->priority;
-    if (lock->donation_counter == 0)
+    if (lock->ancient_priority == 0)
       lock->holder->priority_old = lock->holder->priority;
 
     lock->donation_counter++;
