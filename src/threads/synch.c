@@ -211,7 +211,7 @@ lock_acquire (struct lock *lock)
     if (lock->ancient_priority == 0)
       lock->holder->priority_old = lock->holder->priority;
 
-    lock->donation_counter++;
+    lock->holder->donation_counter++;
   }
 
   sema_down (&lock->semaphore);
@@ -249,7 +249,7 @@ lock_release (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
 
-  lock->donation_counter--;
+  lock->holder->donation_counter--;
 
   if (lock->holder->donation_counter != 0)
   {
