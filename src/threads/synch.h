@@ -24,7 +24,7 @@ struct lock
     struct semaphore semaphore; /* Binary semaphore controlling access. */
     int ancient_priority;       /* Priority before donation. */
 
-    bool dono;               /* Boolean to determine if a donation has been made. */
+    int counter_donation;               /* Counter to determine if a donation has been made. */
   };
 
 void lock_init (struct lock *);
