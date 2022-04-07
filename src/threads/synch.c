@@ -169,7 +169,7 @@ sema_test_helper (void *sema_)
       sema_up (&sema[1]);
     }
 }
-
+
 /* Initializes LOCK.  A lock can be held by at most a single
    thread at any given time.  Our locks are not "recursive", that
    is, it is an error for the thread currently holding a lock to
@@ -191,6 +191,7 @@ lock_init (struct lock *lock)
   ASSERT (lock != NULL);
 
   lock->holder = NULL;
+  lock->donation_counter = 0;
   sema_init (&lock->semaphore, 1);
 }
 
@@ -211,20 +212,16 @@ lock_acquire (struct lock *lock)
 
   struct thread *t = thread_current ();
 
-  if(lock->holder != NULL && lock->holder->priority < t->priority)
+  if (lock->holder != NULL && lock->holder->priority < t->priority)
   {
-    t->priority_old = t->priority;
-
     lock->ancient_priority = lock->holder->priority;
 
     if (lock->holder->donation_counter == 0)
-    {
-      lock->holder->priority_old = lock->holder->priority;
-      lock->holder->donation_counter++;
-    }
+      lock->holder->old_priority = lock->holder->priority;
 
     lock->holder->priority = t->priority;
-    lock->counter_donation++;
+    lock->holder->donation_counter++;
+    lock->donation_counter++;
   }
 
   sema_down (&lock->semaphore);
@@ -262,15 +259,15 @@ lock_release (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
 
-  if (lock->holder->donation_counter > 0 && lock->counter_donation > 0)
+  if (lock->holder->donation_counter > 0 && lock->donation_counter > 0)
   {
-    lock->counter_donation--;
+    lock->donation_counter--;
     lock->holder->donation_counter--;
 
     if(lock->holder->donation_counter > 0)
       lock->holder->priority = lock->ancient_priority;
     else
-      lock->holder->priority = lock->holder->priority_old;
+      lock->holder->priority = lock->holder->old_priority;
   }
 
   lock->holder = NULL;
@@ -287,7 +284,7 @@ lock_held_by_current_thread (const struct lock *lock)
 
   return lock->holder == thread_current ();
 }
-
+
 /* One semaphore in a list. */
 struct semaphore_elem
   {
@@ -391,7 +388,7 @@ compare_sema(const struct list_elem* e1, const struct list_elem *e2, void* aux U
   struct thread* t1 = list_entry(e1, struct thread, elem);
   struct thread* t2 = list_entry(e2, struct thread, elem);
 
-  return t1->priority > t2->priority;
+  return t1->priority >= t2->priority;
 }
 
 static bool
@@ -402,5 +399,5 @@ compare_cond(const struct list_elem* e1, const struct list_elem *e2, void* aux U
   struct thread* t1 = list_entry(list_front(&(s1->semaphore.waiters)), struct thread, elem);
   struct thread* t2 = list_entry(list_front(&(s2->semaphore.waiters)), struct thread, elem);
 
-  return t1->priority < t2->priority;
+  return t1->priority <= t2->priority;
 }

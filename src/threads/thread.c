@@ -410,7 +410,7 @@ thread_set_priority (int new_priority)
 
   if(t->donation_counter > 0)
   {
-    t->priority_old = new_priority;
+    t->old_priority = new_priority;
     return;
   }
   
@@ -547,7 +547,6 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   t->nice = 0;
-  t->priority_old = -1;
   t->donation_counter = 0;
   t->recent_cpu = 0;
   list_push_back (&all_list, &t->allelem);
