@@ -419,8 +419,6 @@ thread_set_priority (int new_priority)
 
   if (old_priority > new_priority)
     thread_yield ();
-
-  update_locks_priority (t);
 }
 
 void
