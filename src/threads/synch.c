@@ -272,6 +272,8 @@ lock_release (struct lock *lock)
       lock->holder->priority = lock->holder->old_priority;
     else if (lock->donated_priority == lock->holder->priority)
       lock->holder->priority = lock->ancient_priority;
+
+    list_remove (&lock->lock_elem);
   }
 
   lock->holder = NULL;
