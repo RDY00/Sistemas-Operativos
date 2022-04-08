@@ -23,7 +23,9 @@ struct lock
     struct thread *holder;      /* Thread holding lock (for debugging). */
     struct semaphore semaphore; /* Binary semaphore controlling access. */
     int ancient_priority;       /* Priority before donation. */
-    int donation_counter;       /* Counter to determine if a donation has been made. */
+    int donated_priority;       /* Priority donated. */
+    bool donation;              /* Donation tracke. */
+    struct list_elem lock_elem; /* List element for thread's list of locks. */
   };
 
 void lock_init (struct lock *);

@@ -419,6 +419,22 @@ thread_set_priority (int new_priority)
 
   if (old_priority > new_priority)
     thread_yield ();
+
+  update_locks_priority (t);
+}
+
+void
+update_locks_priority (struct thread *t) 
+{
+  struct list_elem *e = list_begin (&t->locks);
+  struct lock *l;
+  
+  for (; e != list_end (&t->locks); e = list_next (e))
+  {
+    l = list_entry (e, struct lock, lock_elem);
+    l->holder->priority = l->donated_priority = t->priority;
+    update_locks_priority (l->holder);
+  }
 }
 
 /* Returns the current thread's priority. */
@@ -549,6 +565,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->nice = 0;
   t->donation_counter = 0;
   t->recent_cpu = 0;
+  list_init (&t->locks);
   list_push_back (&all_list, &t->allelem);
 }
 
