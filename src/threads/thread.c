@@ -417,6 +417,8 @@ thread_set_priority (int new_priority)
   int old_priority = t->priority;
   t->priority = new_priority;
 
+  update_locks_priority (t);
+
   if (old_priority > new_priority)
     thread_yield ();
 }
@@ -430,8 +432,12 @@ update_locks_priority (struct thread *t)
   for (; e != list_end (&t->locks); e = list_next (e))
   {
     l = list_entry (e, struct lock, lock_elem);
-    l->holder->priority = l->donated_priority = t->priority;
-    update_locks_priority (l->holder);
+
+    if (l->holder->priority < t->priority)
+    {
+      l->holder->priority = l->donated_priority = t->priority;
+      update_locks_priority (l->holder);
+    }
   }
 }
 

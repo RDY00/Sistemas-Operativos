@@ -1,0 +1,29 @@
+#!/bin/sh
+
+cd ../src/threads/
+
+echo "Corriendo pruebas..."
+make build/tests/threads/priority-donate-one.result
+echo
+make build/tests/threads/priority-donate-lower.result
+echo
+make build/tests/threads/priority-donate-multiple.result
+echo
+make build/tests/threads/priority-donate-multiple2.result
+echo
+make build/tests/threads/priority-donate-nest.result
+echo
+make build/tests/threads/priority-donate-chain.result
+echo
+
+cd -
+
+echo "Pruebas finalizadas."
+echo "Generando resultados en results.txt"
+
+cat ../src/threads/build/tests/threads/priority-donate-one.result > results.txt
+cat ../src/threads/build/tests/threads/priority-donate-lower.result >> results.txt
+cat ../src/threads/build/tests/threads/priority-donate-multiple.result >> results.txt
+cat ../src/threads/build/tests/threads/priority-donate-multiple2.result >> results.txt
+cat ../src/threads/build/tests/threads/priority-donate-nest.result >> results.txt
+cat ../src/threads/build/tests/threads/priority-donate-chain.result >> results.txt

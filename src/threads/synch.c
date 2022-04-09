@@ -217,7 +217,8 @@ lock_acquire (struct lock *lock)
     if (lock->holder->donation_counter == 0)
       lock->holder->old_priority = lock->holder->priority;
 
-    if (!lock->donation) {
+    if (!lock->donation) 
+    {
       lock->ancient_priority = lock->holder->priority;
       lock->holder->donation_counter++;
       lock->donation = true;
@@ -268,7 +269,7 @@ lock_release (struct lock *lock)
     lock->donation = false;
     lock->holder->donation_counter--;
 
-    if(lock->holder->donation_counter == 0)
+    if (lock->holder->donation_counter == 0)
       lock->holder->priority = lock->holder->old_priority;
     else if (lock->donated_priority == lock->holder->priority)
       lock->holder->priority = lock->ancient_priority;
