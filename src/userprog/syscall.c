@@ -7,14 +7,53 @@
 static void syscall_handler (struct intr_frame *);
 
 void
-syscall_init (void) 
+syscall_init (void)
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
 static void
-syscall_handler (struct intr_frame *f UNUSED) 
+syscall_handler (struct intr_frame *f UNUSED)
 {
-  printf ("system call!\n");
-  thread_exit ();
+   uint32_t* esp = f->esp;
+  uint32_t syscall = *esp;
+  esp++;
+
+  switch(syscall) {
+    case SYS_WRITE: {
+      int fd = *esp;
+      esp++;
+      void* buffer = (void*)*esp;
+      esp++;
+      unsigned int size = *esp;
+
+      putbuf(buffer, size);
+
+      break;
+    }
+    case SYS_EXEC: {
+      char* cmd = (char*)*esp;
+
+      f->eax = process_execute(cmd);
+      break;
+    }
+    case SYS_WAIT: {
+      int pid = (int)*esp;
+
+      f->eax = process_wait(pid);
+      break;
+    }
+    case SYS_EXIT: {
+      int status = *esp;
+
+      struct thread* current = thread_current();
+      printf("%s: exit(%d)\n", thread_current()->name, status);
+
+      if(current->parent != NULL)
+        sema_up (current->parent->wait)
+
+      thread_exit ();
+      break;
+    }
+  }
 }

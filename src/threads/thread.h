@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -89,11 +90,6 @@ struct thread
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
     struct list_elem allelem;           /* List element for all threads list. */
-    int recent_cpu;                     /* CPU time. */
-    int nice;                           /* Niceness. */
-    int donation_counter;               /* # of donations recieved. */
-    int old_priority;                   /* Priority before first donation. */
-    struct list locks;                  /* List of locks with donated priotiry. */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
@@ -101,6 +97,8 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct semaphore wait;              /* Semaphore para usar en process_wait. */
+    struct thread* parent;              /* La referencia al padre que creo al hilo */
 #endif
 
     /* Owned by thread.c. */
@@ -137,9 +135,6 @@ void thread_foreach (thread_action_func *, void *);
 
 int thread_get_priority (void);
 void thread_set_priority (int);
-
-/* AGREGADA POR NOSOTROS */
-void update_locks_priority (struct thread *);
 
 int thread_get_nice (void);
 void thread_set_nice (int);
