@@ -3,6 +3,8 @@
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "userprog/process.h"
+#include "threads/thread.c"
 
 static void syscall_handler (struct intr_frame *);
 
@@ -19,9 +21,9 @@ syscall_handler (struct intr_frame *f UNUSED)
   uint32_t syscall = *esp;
   esp++;
 
-  switch(syscall) 
+  switch(syscall)
   {
-    case SYS_WRITE: 
+    case SYS_WRITE:
     {
       int fd = *esp;
       esp++;
@@ -33,20 +35,20 @@ syscall_handler (struct intr_frame *f UNUSED)
 
       break;
     }
-    case SYS_EXEC: 
+    case SYS_EXEC:
     {
       char* cmd = (char *) *esp;
-      sema_down (thread_current ()->wait);
+      sema_down (&thread_current ()->wait);
       f->eax = process_execute (cmd);
       break;
     }
-    case SYS_WAIT: 
+    case SYS_WAIT:
     {
       int pid = (int) *esp;
       f->eax = process_wait (pid);
       break;
     }
-    case SYS_EXIT: 
+    case SYS_EXIT:
     {
       int status = *esp;
       struct thread* current = thread_current ();
@@ -55,7 +57,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       if (current->parent != NULL)
       {
         current->pb->exit_status = status;
-        sema_up (current->parent->wait);
+        sema_up (&current->parent->wait);
       }
 
       thread_exit ();

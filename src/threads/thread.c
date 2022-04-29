@@ -15,6 +15,16 @@
 #include "userprog/process.h"
 #endif
 
+/*
+A kernel process created by a kernel thread.
+*/
+struct process {
+  tid_t tid;
+  struct thread *t;
+  int exit_status;
+  struct list_elem elem;
+};
+
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
    of thread.h for details. */
@@ -470,11 +480,11 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
 #ifdef USERPROG
-  sema_init(t->wait, 0);
-  list_init(&t->childs)
+  sema_init(&t->wait, 0);
+  list_init(&t->childs);
   t->parent = thread_current();
-  t->is_waiting_child = false
-  t->wait_call = false
+  t->is_waiting_child = false;
+  t->wait_call = false;
 #endif
   list_push_back (&all_list, &t->allelem);
 }
