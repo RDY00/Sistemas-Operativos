@@ -18,7 +18,6 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "devices/timer.h"
-#include "threads/thread.c"
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
@@ -79,13 +78,11 @@ start_process (void *file_name_)
   if (success)
   {
     struct thread *t = thread_current ();
-    struct process* pb = (struct process*) calloc (1, sizeof (struct process));
-    pb->tid = t->tid;
+    struct process *pb = (struct process *) calloc (1, sizeof (struct process));
     pb->t = t;
     pb->exit_status = -2;
 
-    t->pb = pb;
-    list_push_back (&t->parent->childs, &pb->elem) ;
+    list_push_back (&t->parent->childs, &pb->elem);
   }
 
   sema_up (&thread_current ()->parent->wait);

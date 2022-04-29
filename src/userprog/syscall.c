@@ -4,7 +4,6 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "userprog/process.h"
-#include "threads/thread.c"
 
 static void syscall_handler (struct intr_frame *);
 
@@ -56,7 +55,19 @@ syscall_handler (struct intr_frame *f UNUSED)
 
       if (current->parent != NULL)
       {
-        current->pb->exit_status = status;
+        struct list *childs = &current->childs;
+        struct list_elem *e = list_begin (childs);
+        struct process *p;
+
+        for (; e != list_end (childs); e = list_next(e))
+        {
+          p = list_entry (e, struct process, elem);
+          if (p->t == current)
+          {
+            p->exit_status = status;
+          }
+        }
+
         sema_up (&current->parent->wait);
       }
 

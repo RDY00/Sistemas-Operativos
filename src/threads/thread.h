@@ -99,7 +99,6 @@ struct thread
     uint32_t *pagedir;                  /* Page directory. */
     struct semaphore wait;              /* Semaphore for system calls */
     struct list childs;                 /* Child processes */
-    struct process *pb;
     struct thread* parent;              /* Parent thread */
     bool is_waiting_child;              /* Boolean to check if the parent is waiting for the process to end */
     bool wait_call;
