@@ -469,8 +469,13 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+#ifdef USERPROG
   sema_init(t->wait, 0);
+  list_init(&t->childs)
   t->parent = thread_current();
+  t->is_waiting_child = false
+  t->wait_call = false
+#endif
   list_push_back (&all_list, &t->allelem);
 }
 

@@ -97,8 +97,12 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
-    struct semaphore wait;              /* Semaphore para usar en process_wait. */
-    struct thread* parent;              /* La referencia al padre que creo al hilo */
+    struct semaphore wait;              /* Semaphore for system calls */
+    struct list childs;                 /* Child processes */
+    struct process *pb;
+    struct thread* parent;              /* Parent thread */
+    bool is_waiting_child;              /* Boolean to check if the parent is waiting for the process to end */
+    bool wait_call;
 #endif
 
     /* Owned by thread.c. */

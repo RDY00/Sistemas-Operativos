@@ -15,15 +15,17 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f UNUSED)
 {
-   uint32_t* esp = f->esp;
+  uint32_t* esp = f->esp;
   uint32_t syscall = *esp;
   esp++;
 
-  switch(syscall) {
-    case SYS_WRITE: {
+  switch(syscall) 
+  {
+    case SYS_WRITE: 
+    {
       int fd = *esp;
       esp++;
-      void* buffer = (void*)*esp;
+      void* buffer = (void *) *esp;
       esp++;
       unsigned int size = *esp;
 
@@ -31,26 +33,30 @@ syscall_handler (struct intr_frame *f UNUSED)
 
       break;
     }
-    case SYS_EXEC: {
-      char* cmd = (char*)*esp;
-
-      f->eax = process_execute(cmd);
+    case SYS_EXEC: 
+    {
+      char* cmd = (char *) *esp;
+      sema_down (thread_current ()->wait);
+      f->eax = process_execute (cmd);
       break;
     }
-    case SYS_WAIT: {
-      int pid = (int)*esp;
-
-      f->eax = process_wait(pid);
+    case SYS_WAIT: 
+    {
+      int pid = (int) *esp;
+      f->eax = process_wait (pid);
       break;
     }
-    case SYS_EXIT: {
+    case SYS_EXIT: 
+    {
       int status = *esp;
+      struct thread* current = thread_current ();
+      printf("%s: exit(%d)\n", current->name, status);
 
-      struct thread* current = thread_current();
-      printf("%s: exit(%d)\n", thread_current()->name, status);
-
-      if(current->parent != NULL)
-        sema_up (current->parent->wait)
+      if (current->parent != NULL)
+      {
+        current->pb->exit_status = status;
+        sema_up (current->parent->wait);
+      }
 
       thread_exit ();
       break;

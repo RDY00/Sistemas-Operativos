@@ -74,6 +74,22 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp);
 
+  /* ==== OUR IMPLEMENTATION ==== */
+  if (success)
+  {
+    struct thread *t = thread_current ();
+    struct process *pb = (struct process *) calloc (1, sizeof (struct process));
+    pb->tid = t->tid;
+    pb->t = t;
+    pb->exit_status = -2;
+
+    t->pb = pb;
+    list_push_back (&t->parent->childs, pb->elem) 
+  }
+
+  sema_up (thread_current ()->parent->wait);
+  /* ==== OUR IMPLEMENTATION ==== */
+
   /* If load failed, quit. */
 
   if (!success)
@@ -105,11 +121,36 @@ start_process (void *file_name_)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED)
+process_wait (tid_t child_tid)
 {
-	//timer_sleep(200);
-  sema_down(thread_current()->wait);
-  //iterar los hijos buscar al que le qiuero hacer wait y hacerlo.
+  struct thread *t = thread_current ();
+  struct list *childs = *t->childs;
+  struct list_elem *e = list_begin (childs);
+  struct process *p;
+
+  for (; e != list_end (childs); e = list_next (e))
+  {
+    p = list_entry (e, struct process, elem);
+    
+    if (p->tid == child_tid)
+    {
+      if (p->exit_status != -2) 
+        int exit = p->exit_status;
+        list_remove (e);
+        free (p);
+        return exit;
+      else if (p->t->wait_call)
+        return -1;
+
+      p->t->is_waiting_child = true;
+      p->t->wait_call = true;
+      sema_down(t->wait);
+      int exit = p->exit_status;
+      list_remove (e);
+      free (p);
+      return exit;
+    }
+  }
   return -1;
 }
 
