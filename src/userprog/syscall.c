@@ -50,8 +50,8 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_EXIT:
     {
       int status = *esp;
-      struct thread* current = thread_current ();
-      printf("%s: exit(%d)\n", current->name, status);
+      struct thread *current = thread_current ();
+      printf ("%s: exit (%d)\n", current->name, status);
 
       if (current->parent != NULL)
       {
@@ -62,9 +62,10 @@ syscall_handler (struct intr_frame *f UNUSED)
         for (; e != list_end (childs); e = list_next(e))
         {
           p = list_entry (e, struct process, elem);
-          if (p->t == current)
+          if (p->t == current) 
           {
             p->exit_status = status;
+            break;
           }
         }
 

@@ -17,6 +17,7 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "threads/malloc.h"
 #include "devices/timer.h"
 
 static thread_func start_process NO_RETURN;
@@ -78,7 +79,8 @@ start_process (void *file_name_)
   if (success)
   {
     struct thread *t = thread_current ();
-    struct process *pb = (struct process *) calloc (1, sizeof (struct process));
+    struct process *pb = (struct process *) calloc (1, sizeof (*pb));
+    pb->tid = t->tid;
     pb->t = t;
     pb->exit_status = -2;
 
@@ -121,7 +123,7 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid)
 {
-  struct thread *t = thread_current ();
+  struct thread *t    = thread_current ();
   struct list *childs = &t->childs;
   struct list_elem *e = list_begin (childs);
   struct process *p;
@@ -132,6 +134,7 @@ process_wait (tid_t child_tid)
 
     if (p->tid == child_tid)
     {
+      /* Process exited */
       if (p->exit_status != -2)
       {
         int exit = p->exit_status;
@@ -144,7 +147,7 @@ process_wait (tid_t child_tid)
 
       p->t->is_waiting_child = true;
       p->t->wait_call = true;
-      sema_down(&t->wait);
+      sema_down (&t->wait);
       int exit = p->exit_status;
       list_remove (e);
       free (p);
