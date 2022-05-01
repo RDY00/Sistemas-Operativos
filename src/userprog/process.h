@@ -2,13 +2,15 @@
 #define USERPROG_PROCESS_H
 
 #include "threads/thread.h"
+#include "lib/kernel/list.h"
 
-/* A kernel process created by a kernel thread. */
-struct process {
+struct process 
+{
   tid_t tid;
   struct thread *t;
   int exit_status;
   struct list_elem elem;
+  bool exited;
 };
 
 tid_t process_execute (const char *file_name);
