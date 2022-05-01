@@ -5,7 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
-#include "lib/kernel/list.h"
+// #include "userprog/process.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -103,6 +103,7 @@ struct thread
     struct thread *parent;
     struct list child_processes;
     bool is_waiting_child;
+    bool successful_load;
 #endif
 
     /* Owned by thread.c. */

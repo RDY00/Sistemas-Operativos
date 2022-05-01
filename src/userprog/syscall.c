@@ -6,6 +6,7 @@
 #include "userprog/process.h"
 #include "threads/synch.h"
 #include "lib/kernel/list.h"
+#include "threads/malloc.h"
 
 static void syscall_handler (struct intr_frame *);
 
@@ -57,7 +58,7 @@ syscall_handler (struct intr_frame *f)
         }
       }
 
-      if (t->is_waiting_child);
+      if (t->is_waiting_child)
         sema_up (&t->parent->sema_exit);
 
       printf("%s: exit(%d)\n", t->name, status);
@@ -66,8 +67,33 @@ syscall_handler (struct intr_frame *f)
     }
     case SYS_EXEC:
     {
-      f->eax = process_execute ((char *) *esp);
+      int tid = process_execute ((char *) *esp);
+
       sema_down (&thread_current ()->sema_load);
+
+      struct thread *t = thread_current ();
+      struct list *l = &t->child_processes; 
+      struct list_elem *e = list_begin (l);
+      struct process *pb;
+      bool success = false;
+
+      for (; e != list_end (l); e = list_next (e))
+      {
+        pb = list_entry (e, struct process, elem);
+
+        if (pb->tid == tid)
+        {
+          success = pb->successful_load;
+          if (!success)
+          {
+            list_remove (e);
+            free (pb);
+          }
+          break;
+        }
+      }
+
+      f->eax = success ? tid : -1;
       break;
     }
     case SYS_WAIT:

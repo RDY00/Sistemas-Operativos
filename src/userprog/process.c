@@ -77,7 +77,23 @@ start_process (void *file_name_)
   success = load (file_name, &if_.eip, &if_.esp);
 
   /* ==== OUR IMPLEMENTATION ==== */
-  sema_up (&thread_current ()->parent->sema_load);
+  struct thread *t = thread_current ();
+  struct list *l = &t->parent->child_processes; 
+  struct list_elem *e = list_begin (l);
+  struct process *pb;
+
+  for (; e != list_end (l); e = list_next (e))
+  {
+    pb = list_entry (e, struct process, elem);
+
+    if (pb->tid == t->tid)
+    {
+      pb->successful_load = success;
+      break;
+    }
+  }
+
+  sema_up (&t->parent->sema_load);
   /* ==== OUR IMPLEMENTATION ==== */
 
   /* If load failed, quit. */

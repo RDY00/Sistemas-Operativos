@@ -10,6 +10,7 @@ struct process
   struct thread *t;
   int exit_status;
   struct list_elem elem;
+  bool successful_load;
   bool exited;
 };
 
