@@ -101,9 +101,9 @@ struct thread
     struct semaphore sema_exit;         /* Semaphore for wait call. */
     struct thread *parent;              /* Parent thread. */
     struct list child_processes;        /* List of processes created with exec. */
-    bool is_waiting_child;              /* True is the parent process called wait on this thread. */
+    bool is_waiting_child;              /* True if the parent process called wait on this thread. */
     bool successful_load;               /* True if the program file was successfully loaded. */
-    struct process *process;            /* Reference to own process struct. */
+    struct process *process;            /* Reference to self process struct. */
 #endif
 
     /* Owned by thread.c. */
