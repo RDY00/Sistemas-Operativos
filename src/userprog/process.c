@@ -76,25 +76,9 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp);
 
-  /* ==== OUR IMPLEMENTATION ==== */
   struct thread *t = thread_current ();
-  struct list *l = &t->parent->child_processes; 
-  struct list_elem *e = list_begin (l);
-  struct process *pb;
-
-  for (; e != list_end (l); e = list_next (e))
-  {
-    pb = list_entry (e, struct process, elem);
-
-    if (pb->tid == t->tid)
-    {
-      pb->successful_load = success;
-      break;
-    }
-  }
-
+  t->process->successful_load = success;
   sema_up (&t->parent->sema_load);
-  /* ==== OUR IMPLEMENTATION ==== */
 
   /* If load failed, quit. */
   
@@ -117,6 +101,23 @@ start_process (void *file_name_)
   NOT_REACHED ();
 }
 
+/* Returns process with same tid in child_processes list of thread t. */
+struct process *
+get_child_process (struct thread *t, tid_t tid)
+{
+  struct list *childs = &t->child_processes;
+  struct list_elem *e = list_begin (childs);
+  struct process *pb;
+
+  for (; e != list_end (childs); e = list_next (e))
+  {
+    pb = list_entry (e, struct process, elem);
+    if (pb->tid == tid) return pb;
+  }
+
+  return NULL;
+}
+
 /* Waits for thread TID to die and returns its exit status.  If
    it was terminated by the kernel (i.e. killed due to an
    exception), returns -1.  If TID is invalid or if it was not a
@@ -132,32 +133,23 @@ process_wait (tid_t child_tid)
 	// timer_sleep(200);
   // return -1;
   struct thread *t = thread_current ();
-  struct list *childs = &t->child_processes;
-  struct list_elem *e = list_begin (childs);
-  struct process *pb;
+  struct process *pb = get_child_process (t, child_tid);
 
-  for (; e != list_end (childs); e = list_next (e))
-  {
-    pb = list_entry (e, struct process, elem);
-    
-    if (pb->tid == child_tid)
-    {
-      if (pb->exited) {
-        int exit = pb->exit_status;
-        list_remove (e);
-        free (pb);
-        return exit;
-      }
+  if (pb == NULL) return -1;
 
-      pb->t->is_waiting_child = true;
-      sema_down (&t->sema_exit);
-      int exit = pb->exit_status;
-      list_remove (e);
-      free (pb);
-      return exit;
-    }
+  if (pb->exited) {
+    int exit = pb->exit_status;
+    list_remove (&pb->elem);
+    free (pb);
+    return exit;
   }
-  return -1;
+
+  pb->t->is_waiting_child = true;
+  sema_down (&t->sema_exit);
+  int exit = pb->exit_status;
+  list_remove (&pb->elem);
+  free (pb);
+  return exit;
 }
 
 /* Free the current process's resources. */

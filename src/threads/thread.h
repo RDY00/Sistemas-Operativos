@@ -5,7 +5,6 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
-// #include "userprog/process.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -98,12 +97,13 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
-    struct semaphore sema_load;
-    struct semaphore sema_exit;
-    struct thread *parent;
-    struct list child_processes;
-    bool is_waiting_child;
-    bool successful_load;
+    struct semaphore sema_load;         /* Semaphore for exec call. */
+    struct semaphore sema_exit;         /* Semaphore for wait call. */
+    struct thread *parent;              /* Parent thread. */
+    struct list child_processes;        /* List of processes created with exec. */
+    bool is_waiting_child;              /* True is the parent process called wait on this thread. */
+    bool successful_load;               /* True if the program file was successfully loaded. */
+    struct process *process;            /* Reference to own process struct. */
 #endif
 
     /* Owned by thread.c. */

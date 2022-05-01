@@ -19,4 +19,6 @@ int process_wait (tid_t);
 void process_exit (void);
 void process_activate (void);
 
+struct process * get_child_process (struct thread *, tid_t);
+
 #endif /* userprog/process.h */

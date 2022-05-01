@@ -213,6 +213,7 @@ thread_create (const char *name, int priority,
   pb->tid = t->tid;
   pb->t = t;
   pb->exited = false;
+  t->process = pb;
   list_push_back (&t->parent->child_processes, &pb->elem);
 #endif
 

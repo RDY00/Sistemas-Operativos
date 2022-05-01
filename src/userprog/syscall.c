@@ -41,22 +41,8 @@ syscall_handler (struct intr_frame *f)
     {
       int status = *esp;
       struct thread *t = thread_current ();
-
-      struct list *childs = &t->parent->child_processes;
-      struct list_elem *e = list_begin (childs);
-      struct process *pb;
-
-      for (; e != list_end (childs); e = list_next (e))
-      {
-        pb = list_entry (e, struct process, elem);
-        
-        if (pb->tid == t->tid)
-        {
-          pb->exit_status = status;
-          pb->exited = true;
-          break;
-        }
-      }
+      t->process->exit_status = status;
+      t->process->exited = true;
 
       if (t->is_waiting_child)
         sema_up (&t->parent->sema_exit);
@@ -68,28 +54,19 @@ syscall_handler (struct intr_frame *f)
     case SYS_EXEC:
     {
       int tid = process_execute ((char *) *esp);
-
-      sema_down (&thread_current ()->sema_load);
-
       struct thread *t = thread_current ();
-      struct list *l = &t->child_processes; 
-      struct list_elem *e = list_begin (l);
-      struct process *pb;
       bool success = false;
+      sema_down (&t->sema_load);
 
-      for (; e != list_end (l); e = list_next (e))
+      if (tid != TID_ERROR)
       {
-        pb = list_entry (e, struct process, elem);
-
-        if (pb->tid == tid)
+        struct process *pb = get_child_process (t, tid);
+        success = pb->successful_load;
+        if (!success)
         {
-          success = pb->successful_load;
-          if (!success)
-          {
-            list_remove (e);
-            free (pb);
-          }
-          break;
+          list_remove (&pb->elem);
+          pb->t->process = NULL;
+          free (pb);
         }
       }
 
