@@ -506,6 +506,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
       /* Get a page of memory. */
       uint8_t *kpage = palloc_get_page (PAL_USER);
       if (kpage == NULL)
+      /*Aquí es dond entra el mecanismo de swapping*/
         return false;
 
       /* Load this page. */
@@ -541,6 +542,7 @@ setup_stack (void **esp)
 
   kpage = palloc_get_page (PAL_USER | PAL_ZERO);
   if (kpage != NULL)
+  /*En este if debe haber un else por si no se pudo apartar memoria, es decir si kpage = NULL.*/
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
