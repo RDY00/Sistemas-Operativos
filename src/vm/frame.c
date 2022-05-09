@@ -24,6 +24,18 @@
 #include "threads/pte.h"
 #include "threads/thread.h"
 
+
+/*Global list for the Frames Table.*/
+static struct list tbf;
+
+
+/*Function to initialize the Frame table.*/
+void
+tbf_init(void)
+{
+
+}
+
 /*
 Function to determine if a frame has been allocated correctly or
 not.

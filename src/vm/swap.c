@@ -23,4 +23,22 @@
 #include "threads/palloc.h"
 #include "threads/pte.h"
 #include "threads/thread.h"
-#include "threads/init.h"
+#include "devices/block.h"
+
+/*Struct to implement swapping.*/
+struct block* swap;
+
+/*List of free slots in secondary storage.*/
+static struct list free_slots;
+
+/*Function to Initialize swapping proces.*/
+/*It must be called in init.c.*/
+void
+swap_init()
+{
+  swap = block_get_role(BLOCK_SWAP);
+  if(swap == NULL) {
+    PANIC ("Error: Can't initialize swap block");
+    NOT_REACHED ();
+  }
+}
