@@ -8,11 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "devices/kbd.h"
-#include "devices/acpi.h"
-#include "devices/input.h"
-#include "devices/serial.h"
-#include "devices/shutdown.h"
 #include "devices/timer.h"
 #include "devices/vga.h"
 #include "devices/rtc.h"
@@ -24,24 +19,46 @@
 #include "threads/pte.h"
 #include "threads/thread.h"
 
+/*
+Usar un lock para concurrencias.
+*/
 
+//Si en page-parallel ocurre algo raro puede ser el caso especifico donde wait está mal implementada.
 /*Global list for the Frames Table.*/
-static struct list tbf;
+static struct list frames;
 
+/*Global list of free frames*/
+static struct list free_frames;
+
+/**/
+struct frame_entry{
+  struct thread* t;
+  uint8_t upage;
+  uint8_t kpage;
+  struct list_elem elem;
+};
 
 /*Function to initialize the Frame table.*/
 void
-tbf_init(void)
+frames_init(void)
 {
-
+  list_init(&frames);
+  list_init(&free_frames);
 }
 
 /*
 Function to determine if a frame has been allocated correctly or
-not.
+not. If it can't be
 */
 void *
-palloc2(void)
+palloc_swap(uint8_t *upage)/*upage es la página*/
 {
-  /* code */
+  uint8_t *kpage=palloc_get_page(PAL_USER);/*Dirección fisica.*/
+  /*Aquí va list pop back para utilizar FIFO*/
+
+  struct frame_entry *selected;
+
+  //FIFO only use pop. Otherwise it may require an iteration to find the suitable page to eliminate.
+
+  pagedir_clear_page (selected->t->pagedir, upage);
 }
