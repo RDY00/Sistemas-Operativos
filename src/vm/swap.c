@@ -22,6 +22,7 @@
 #include "threads/pte.h"
 #include "threads/thread.h"
 #include "devices/block.h"
+#include "lib/kernel/hash.h"
 
 /*Struct to implement swapping.*/
 struct block* swap;
@@ -59,3 +60,16 @@ swap_find(void *fault_addr)
 }
 //block_write()
 //block_read()
+
+/*Function to retrive information from secondary storage.*/
+void
+swap_in(void) {
+  /* code */
+}
+
+/*Funciton to send information to seconcdary storage.*/
+void
+swap_out(void)
+{
+
+}

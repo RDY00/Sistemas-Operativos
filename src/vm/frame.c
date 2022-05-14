@@ -48,7 +48,7 @@ frames_init(void)
 
 /*
 Function to determine if a frame has been allocated correctly or
-not. If it can't be
+not. If it can't be allocated should return null.
 */
 void *
 palloc_swap(uint8_t *upage)/*upage es la página*/
@@ -61,4 +61,12 @@ palloc_swap(uint8_t *upage)/*upage es la página*/
   //FIFO only use pop. Otherwise it may require an iteration to find the suitable page to eliminate.
 
   pagedir_clear_page (selected->t->pagedir, upage);
+}
+
+/*
+Function to free a slot.
+*/
+void *
+release_slot(void){
+
 }
