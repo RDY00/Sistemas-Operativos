@@ -70,7 +70,7 @@ palloc_swap (uint8_t *upage)
 
   //FIFO only use pop. Otherwise it may require an iteration to find the suitable page to eliminate.
 
-  pagedir_clear_page (selected->t->pagedir, señected->upage);
+  pagedir_clear_page (selected->t->pagedir, selected->upage);
 }
 
 /*
