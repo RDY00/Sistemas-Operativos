@@ -24,11 +24,10 @@
 #include "devices/block.h"
 #include "lib/kernel/hash.h"
 
-/*Struct to implement swapping.*/
-struct block* swap;
+/* Struct to implement swapping. */
+struct block *swap;
 
-/*List of free slots in secondary storage.*/
-//List for FIFO. Otherwise hash.
+/* List of free slots in secondary storage. */
 static struct list free_slots;
 
 /* Represents how many sectors are needed to store a page */
@@ -36,39 +35,41 @@ static size_t SECTORS_PER_PAGE = PGSIZE / BLOCK_SECTOR_SIZE;
 static size_t swap_size_in_page (void);
 
 
-/*Struct to compare pages, for recovering a page from sencondary storage. This struct could go in thread.h for lettíng everý thread know what pages belong to it.*/
+/* Struct to compare pages, for recovering a page from sencondary storage. 
+   This struct could go in thread.h for letting every thread know what 
+   pages belong to it. */
 struct page_swap
 {
-  void *upage;              /*Page to bring from H*/
-  block_sector_t swap_slot; /* What sector or block the page is (in secondary storage).*/
+  void *upage;              /* Page to bring from H */
+  block_sector_t swap_slot; /* What sector or block the page is (in secondary storage). */
 
 };
 
-/*Function to Initialize swapping proces.*/
-/*It must be called in init.c.*/
+/* Function to Initialize swapping proces. */
+/* It must be called in init.c. */
 void
-init_swap()
+init_swap (void)
 {
-  swap = block_get_role (BLOCK_SWAP);//512 bytes repartidos en 4k.Es decir debemos saber cuántos de esos blocks para una pagina.
-  if(swap == NULL)
+  swap = block_get_role (BLOCK_SWAP); //512 bytes repartidos en 4k. Es decir debemos saber cuántos de esos blocks para una pagina.
+  if (swap == NULL)
   {
     PANIC ("Error: Can't initialize swap block");
     NOT_REACHED ();
   }
 
-  list_init(&free_slots);
+  list_init (&free_slots);
 }
 
-/*Funciton to look for pages in */
+/* Funciton to look for pages in */
 bool
-swap_find(void *fault_addr)
+swap_find (void *fault_addr)
 {
   //pagedir_set_page(thread_current()->pagedir, fault_addr->upage);
 }
 
-/*Function to retrive information from secondary storage.*/
+/* Function to retrive information from secondary storage. */
 void
-swap_in(int page, void *uva) {
+swap_in (int page, void *uva) {
 
   int counter = 0;
 
@@ -89,7 +90,7 @@ void
 swap_out(const void *uva)
 {
   /*Aquí no sé si poner size_t en vez de int o qué poner jaja*/
-  int page = list_pop_back(&free_slots);
+  int page = list_pop_back (&free_slots);
 
   if(page == NULL)
     PANIC("Cant swap_out.");
@@ -108,7 +109,7 @@ swap_out(const void *uva)
 
 /* Returns how many pages the swap device can contain, which is rounded down */
 static size_t
-swap_size_in_page ()
+swap_size_in_page (void)
 {
   return block_size (swap) / SECTORS_PER_PAGE;
 }
