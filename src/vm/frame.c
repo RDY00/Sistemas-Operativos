@@ -30,7 +30,10 @@ static struct list frames;
 /*Global list of free frames*/
 static struct list free_frames;
 
-/**/
+/*Lock to handle sincronization for proces on frame table.*/
+static struct lock vm_lock;
+
+/*Struct to represent */
 struct frame_entry{
   struct thread* t;
   uint8_t upage;
@@ -44,6 +47,7 @@ frames_init(void)
 {
   list_init(&frames);
   list_init(&free_frames);
+  lock_init(&vm_lock);
 }
 
 /*

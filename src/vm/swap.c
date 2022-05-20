@@ -31,6 +31,11 @@ struct block* swap;
 //List for FIFO. Otherwise hash.
 static struct list free_slots;
 
+/* Represents how many sectors are needed to store a page */
+static size_t SECTORS_PER_PAGE = PGSIZE / BLOCK_SECTOR_SIZE;
+static size_t swap_size_in_page (void);
+
+
 /*Struct to compare pages, for recovering a page from sencondary storage. This struct could go in thread.h for lettíng everý thread know what pages belong to it.*/
 struct page_swap
 {
@@ -50,6 +55,8 @@ init_swap()
     PANIC ("Error: Can't initialize swap block");
     NOT_REACHED ();
   }
+
+  list_init(&free_slots);
 }
 
 /*Funciton to look for pages in */
@@ -58,18 +65,50 @@ swap_find(void *fault_addr)
 {
   //pagedir_set_page(thread_current()->pagedir, fault_addr->upage);
 }
-//block_write()
-//block_read()
 
 /*Function to retrive information from secondary storage.*/
 void
-swap_in(void) {
-  /* code */
+swap_in(int page, void *uva) {
+
+  int counter = 0;
+
+  while(counter < SECTORS_PER_PAGE){
+
+    block_read (swap, page * SECTORS_PER_PAGE + counter, uva + counter * BLOCK_SECTOR_SIZE);
+
+    counter++;
+  }
+
+  /*Here we should use function to free a slot.*/
 }
 
-/*Funciton to send information to seconcdary storage.*/
+/* Find an available swap slot and dump in the given page represented by UVA
+   If failed, return SWAP_ERROR
+   Otherwise, return the swap slot index */
 void
-swap_out(void)
+swap_out(const void *uva)
 {
+  /*Aquí no sé si poner size_t en vez de int o qué poner jaja*/
+  int page = list_pop_back(&free_slots);
 
+  if(page == NULL)
+    PANIC("Cant swap_out.");
+
+  int counter = 0;
+
+  while(counter < SECTORS_PER_PAGE){
+
+    block_write (swap, page * SECTORS_PER_PAGE + counter, uva + counter * BLOCK_SECTOR_SIZE);
+
+    counter++;
+  }
+
+  return page;
+}
+
+/* Returns how many pages the swap device can contain, which is rounded down */
+static size_t
+swap_size_in_page ()
+{
+  return block_size (swap) / SECTORS_PER_PAGE;
 }
