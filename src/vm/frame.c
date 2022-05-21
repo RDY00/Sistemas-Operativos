@@ -2,21 +2,15 @@
 #include <console.h>
 #include <debug.h>
 #include <inttypes.h>
-#include <limits.h>
-#include <random.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "devices/timer.h"
-#include "devices/vga.h"
-#include "devices/rtc.h"
 #include "threads/interrupt.h"
 #include "threads/io.h"
 #include "threads/loader.h"
 #include "threads/malloc.h"
 #include "threads/palloc.h"
-#include "threads/pte.h"
 #include "threads/thread.h"
 #include "lib/kernel/list.h"
 
@@ -62,7 +56,7 @@ palloc_swap (uint8_t *upage)
     fe.t = thread_current ();
     fe.upage = upage;
     fe.kpage = kpage;
-    list_push_back (&frames, &fe.elem); 
+    list_push_back (&frames, &fe.elem);
     return kpage;
   }
 
@@ -75,10 +69,10 @@ palloc_swap (uint8_t *upage)
 }
 
 /*
-Function to free a slot.
+Function to free a slot.Tal vez esta función está de más ya que el sacar de esa lista lo manejamos en palloc_swap.
 */
 void *
-release_slot(void) 
+release_slot(void)
 {
-
+  list_pop_front(&frames);
 }
