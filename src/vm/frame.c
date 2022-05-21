@@ -18,6 +18,7 @@
 #include "threads/palloc.h"
 #include "threads/pte.h"
 #include "threads/thread.h"
+#include "lib/kernel/list.h"
 
 /*
 Usar un lock para concurrencias.
@@ -66,7 +67,7 @@ palloc_swap (uint8_t *upage)
   }
 
   struct frame_entry *selected;
-  selected = list_entry (list_pop_front (&frame), struct frame_entry, elem);
+  selected = list_entry (list_pop_front (&frames), struct frame_entry, elem);
 
   //FIFO only use pop. Otherwise it may require an iteration to find the suitable page to eliminate.
 

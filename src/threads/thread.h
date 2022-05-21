@@ -107,9 +107,6 @@ struct thread
     struct process *process;            /* Reference to own process struct. */
 #endif
 
-    struct hash swapping;               /*Structure to handle swapping and suplementary paging table.*/
-
-
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
