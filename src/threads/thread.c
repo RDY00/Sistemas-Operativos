@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "vm/page.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "threads/malloc.h"
@@ -216,6 +217,8 @@ thread_create (const char *name, int priority,
   t->process = pb;
   list_push_back (&t->parent->child_processes, &pb->elem);
 #endif
+  
+  t->pt = page_table_create();
 
   /* Add to run queue. */
   thread_unblock (t);
@@ -304,6 +307,7 @@ thread_exit (void)
 #ifdef USERPROG
   process_exit ();
 #endif
+  page_destroy (thread_current ()->pt);
 
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
