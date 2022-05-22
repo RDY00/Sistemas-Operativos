@@ -21,7 +21,6 @@ create_page_entry (struct page_table *pt, void *upage)
 {
   struct page *p = (struct page *) calloc (1, sizeof p);
   p->upage = upage;
-  ASSERT (1 == 3);
   hash_insert (pt->pt_hash, &p->elem);
   return p;
 }

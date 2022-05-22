@@ -46,11 +46,11 @@ not. If it can't be allocated should return null.
 void *
 palloc_swap (void *upage, bool writable)
 {
-  // lock_acquire (&vm_lock);
+  lock_acquire (&vm_lock);
   struct page *p = create_page_entry (thread_current ()->pt, upage);
   p->writable = writable;
   void *kpage = get_kpage_swap (p);
-  // lock_release (&vm_lock);
+  lock_release (&vm_lock);
   return kpage;
 }
 
@@ -93,27 +93,21 @@ insert_frame (struct page *p)
 bool
 activate_page (void *upage)
 {
-  // lock_acquire (&vm_lock);
+  lock_acquire (&vm_lock);
   upage = pg_round_down (upage);
   struct thread *t = thread_current ();
   struct page *p = find_page_entry (t->pt, upage);
-  ASSERT (!p);
-  ASSERT (t->magic == 0xcd6abf4b);
-  ASSERT (t->magic != 0xcd6abf4b);
-
 
   if (!p || !p->in_disk)
   {
     lock_release (&vm_lock);
-    ASSERT (2==3);
     return false;
   }
 
   void *kpage = get_kpage_swap (p);
   swap_read (kpage, p->sector);
   p->in_disk = false;
-  bool success = pagedir_set_page (t->pagedir, upage, kpage, true);
+  bool success = pagedir_set_page (t->pagedir, upage, kpage, p->writable);
   lock_release (&vm_lock);
-  ASSERT (4==3);
   return success;
 }

@@ -109,6 +109,8 @@ main (void)
   gdt_init ();
 #endif
 
+  frame_init();
+
   /* Initialize interrupt handlers. */
   intr_init ();
   timer_init ();
@@ -131,7 +133,6 @@ main (void)
   filesys_init (format_filesys);
 #endif
 
-  frame_init();
   swap_init();
 
   printf ("Boot complete.\n");
