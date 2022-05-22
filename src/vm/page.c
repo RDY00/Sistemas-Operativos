@@ -1,17 +1,17 @@
 #include "vm/page.h"
 #include "threads/thread.h"
 #include "threads/malloc.h"
+#include "lib/kernel/hash.h"
 #include "lib/debug.h"
 
 unsigned page_hash (const struct hash_elem *, void *);
 bool page_less (const struct hash_elem *, const struct hash_elem *, void *);
 void page_destructor (struct hash_elem *, void *);
 
-struct page *
+struct page_table *
 page_table_create (void)
 {
-  struct page_table *pt = calloc (1, sizeof *pt);
-  thread_current ()->pt = pt;
+  struct page_table *pt = (struct page_table *) calloc (1, sizeof *pt);
   hash_init (pt->pt_hash, page_hash, page_less, NULL);
   return pt;
 }
@@ -19,8 +19,9 @@ page_table_create (void)
 struct page *
 create_page_entry (struct page_table *pt, void *upage)
 {
-  struct page *p = calloc (1, sizeof p);
+  struct page *p = (struct page *) calloc (1, sizeof p);
   p->upage = upage;
+  ASSERT (1 == 3);
   hash_insert (pt->pt_hash, &p->elem);
   return p;
 }

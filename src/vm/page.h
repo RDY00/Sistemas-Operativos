@@ -18,10 +18,10 @@ struct page
   struct hash_elem elem;
 };
 
-struct page *page_table_create (void);
+struct page_table *page_table_create (void);
 struct page *create_page_entry (struct page_table *pt, void *upage);
 struct page *find_page_entry (struct page_table *pt, void *upage);
 void remove_page_entry (struct page_table *pt, void *upage);
-void page_destroy (struct page_table *pt)
+void page_destroy (struct page_table *pt);
 
 #endif

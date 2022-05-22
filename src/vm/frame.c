@@ -1,6 +1,9 @@
+#include "vm/frame.h"
 #include "threads/palloc.h"
 #include "threads/malloc.h"
 #include "threads/thread.h"
+#include "threads/vaddr.h"
+#include "threads/synch.h"
 #include "userprog/pagedir.h"
 #include "lib/kernel/list.h"
 #include "vm/swap.h"
@@ -16,7 +19,8 @@ static struct list frames;
 /*Lock to handle sincronization for proces on frame table.*/
 static struct lock vm_lock;
 
-void * insert_frame (void *, struct page *);
+void *insert_frame (struct page *);
+void *get_kpage_swap (struct page *);
 
 /*Struct to represent */
 struct frame_entry
@@ -42,18 +46,18 @@ not. If it can't be allocated should return null.
 void *
 palloc_swap (void *upage, bool writable)
 {
-  lock_acquire (&vm_lock);
-  struct page *p = create_page_entry (thread_current ()->pt->pt_hash, upage);
+  // lock_acquire (&vm_lock);
+  struct page *p = create_page_entry (thread_current ()->pt, upage);
   p->writable = writable;
-  void *kpage = get_kpage_swap (upage, p);
-  lock_release (&vm_lock);
+  void *kpage = get_kpage_swap (p);
+  // lock_release (&vm_lock);
   return kpage;
 }
 
 void *
-get_kpage_swap (void *upage, struct page *p)
+get_kpage_swap (struct page *p)
 {
-  void *kpage = insert_frame (upage, p);
+  void *kpage = insert_frame (p);
 
   if (kpage) return kpage;
 
@@ -65,18 +69,18 @@ get_kpage_swap (void *upage, struct page *p)
   pagedir_clear_page (selected->t->pagedir, selected->p->upage);
   free (selected);
 
-  kpage = insert_frame (upage, p); /* It should work this time */
+  kpage = insert_frame (p); /* It should work this time */
   return kpage;
 }
 
 void *
-insert_frame (void *upage, struct page *p)
+insert_frame (struct page *p)
 {
   void *kpage = palloc_get_page (PAL_USER);
 
   if (kpage)
   {
-    struct frame_entry *fe =  calloc (1, sizeof *fe);
+    struct frame_entry *fe = (struct frame_entry *) calloc (1, sizeof *fe);
     fe->t = thread_current ();
     fe->p = p;
     fe->kpage = kpage;
@@ -89,20 +93,27 @@ insert_frame (void *upage, struct page *p)
 bool
 activate_page (void *upage)
 {
-  lock_acquire (&vm_lock);
+  // lock_acquire (&vm_lock);
+  upage = pg_round_down (upage);
   struct thread *t = thread_current ();
-  struct page *p = find_page_entry (t->pt->pt_hash, upage);
+  struct page *p = find_page_entry (t->pt, upage);
+  ASSERT (!p);
+  ASSERT (t->magic == 0xcd6abf4b);
+  ASSERT (t->magic != 0xcd6abf4b);
+
 
   if (!p || !p->in_disk)
   {
     lock_release (&vm_lock);
+    ASSERT (2==3);
     return false;
   }
 
-  void *kpage = get_kpage_swap (upage, p);
+  void *kpage = get_kpage_swap (p);
   swap_read (kpage, p->sector);
   p->in_disk = false;
-  bool success = pagedir_set_page (t->pagedir, upage, kpage, p->writable);
+  bool success = pagedir_set_page (t->pagedir, upage, kpage, true);
   lock_release (&vm_lock);
+  ASSERT (4==3);
   return success;
 }

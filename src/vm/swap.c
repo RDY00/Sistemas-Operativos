@@ -1,12 +1,7 @@
 #include "vm/swap.h"
-#include <stdbool.h>
-#include "devices/block.h"
-#include "lib/kernel/list.h"
 #include "lib/kernel/bitmap.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
-#include "userprog/pagedir.h"
-#include "threads/palloc.h"
 #include "vm/frame.h"
 #include "vm/page.h"
 
@@ -22,7 +17,7 @@ block_sector_t find_free_sectors (void);
 /* Function to initialize swapping process. */
 /* It must be called in init.c. */
 void
-init_swap (void)
+swap_init (void)
 {
   swap_block = block_get_role (BLOCK_SWAP);
 
@@ -30,16 +25,6 @@ init_swap (void)
     PANIC ("Error: Can't initialize swap block");
 
   sectors = bitmap_create (block_size (swap_block) / SECTORS_PER_PAGE);
-}
-
-/* Function to look for pages in */
-block_sector_t
-swap_find (void *upage)
-{
-  struct thread *t = thread_current ();
-  struct page *p = find_page_entry (t->pt->pt_hash, upage);
-
-  //pagedir_set_page(thread_current()->pagedir, fault_addr->upage);
 }
 
 /* Function to retrive information from secondary storage. */
@@ -56,21 +41,22 @@ swap_read (void *kpage, block_sector_t s)
    If failed, return "can't swap."
    Otherwise, return the swap slot index */
 block_sector_t
-swap_write (void *upage, void *kpage)
+swap_write (void *kpage)
 {
-  block_sector_t s = find_free_sectors ();
+  block_sector_t st = find_free_sectors ();
+  block_sector_t s = st;
   uint8_t *temp = kpage;
 
   for (; s < SECTORS_PER_PAGE; s++, temp += BLOCK_SECTOR_SIZE)
     block_write (swap_block, s, temp);
 
-  return s;
+  return st;
 }
 
 block_sector_t
 find_free_sectors (void)
 {
-  block_sector_t s = bitmap_scan_and_flip (swap_block, 0, 1, false);
+  block_sector_t s = bitmap_scan_and_flip (sectors, 0, 1, false);
 
   if (s == BITMAP_ERROR)
     PANIC("Couldn't find free sectors to allocate page");

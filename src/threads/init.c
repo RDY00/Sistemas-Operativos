@@ -38,6 +38,8 @@
 #include "filesys/filesys.h"
 #include "filesys/fsutil.h"
 #endif
+#include "vm/frame.h"
+#include "vm/swap.h"
 
 /* Page directory with kernel mappings only. */
 uint32_t *init_page_dir;
@@ -106,7 +108,6 @@ main (void)
   tss_init ();
   gdt_init ();
 #endif
-/*Aquí llamar list_init y frame_init*/
 
   /* Initialize interrupt handlers. */
   intr_init ();
@@ -129,6 +130,9 @@ main (void)
   locate_block_devices ();
   filesys_init (format_filesys);
 #endif
+
+  frame_init();
+  swap_init();
 
   printf ("Boot complete.\n");
 

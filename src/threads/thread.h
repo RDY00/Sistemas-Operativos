@@ -107,7 +107,7 @@ struct thread
     struct process *process;            /* Reference to own process struct. */
 #endif
 
-   struct page_table *pt;
+    struct page_table *pt;
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
