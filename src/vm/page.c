@@ -12,7 +12,7 @@ struct page_table *
 page_table_create (void)
 {
   struct page_table *pt = (struct page_table *) calloc (1, sizeof *pt);
-  hash_init (pt->pt_hash, page_hash, page_less, NULL);
+  hash_init (&pt->pt_hash, page_hash, page_less, NULL);
   return pt;
 }
 
@@ -21,7 +21,7 @@ create_page_entry (struct page_table *pt, void *upage)
 {
   struct page *p = (struct page *) calloc (1, sizeof p);
   p->upage = upage;
-  hash_insert (pt->pt_hash, &p->elem);
+  hash_insert (&pt->pt_hash, &p->elem);
   return p;
 }
 
@@ -30,7 +30,7 @@ remove_page_entry (struct page_table *pt, void *upage)
 {
   struct page p;
   p.upage = upage;
-  struct hash_elem *e = hash_delete (pt->pt_hash, &p.elem);
+  struct hash_elem *e = hash_delete (&pt->pt_hash, &p.elem);
   free (hash_entry (e, struct page, elem));
 }
 
@@ -39,14 +39,14 @@ find_page_entry (struct page_table *pt, void *upage)
 {
   struct page p;
   p.upage = upage;
-  struct hash_elem *e = hash_find (pt->pt_hash, &p.elem);
+  struct hash_elem *e = hash_find (&pt->pt_hash, &p.elem);
   return e != NULL ? hash_entry (e, struct page, elem) : NULL;
 }
 
 void
 page_destroy (struct page_table *pt)
 {
-  hash_destroy (pt->pt_hash, page_destructor);
+  hash_destroy (&pt->pt_hash, page_destructor);
 }
 
 unsigned

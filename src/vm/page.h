@@ -6,7 +6,7 @@
 
 struct page_table
 {
-  struct hash *pt_hash;
+  struct hash pt_hash;
 };
 
 struct page
