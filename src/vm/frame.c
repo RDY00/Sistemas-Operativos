@@ -1,18 +1,8 @@
-#include "threads/init.h"
-#include <console.h>
-#include <debug.h>
-#include <inttypes.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "threads/interrupt.h"
-#include "threads/io.h"
-#include "threads/loader.h"
-#include "threads/malloc.h"
 #include "threads/palloc.h"
 #include "threads/thread.h"
+#include "userprog/pagedir.h"
 #include "lib/kernel/list.h"
+#include "vm/swap.h"
 
 /*
 Usar un lock para concurrencias.
@@ -28,8 +18,8 @@ static struct lock vm_lock;
 struct frame_entry
 {
   struct thread *t;
-  uint8_t *upage;
-  uint8_t *kpage;
+  void *upage;
+  void *kpage;
   struct list_elem elem;
 };
 
@@ -46,9 +36,9 @@ Function to determine if a frame has been allocated correctly or
 not. If it can't be allocated should return null.
 */
 void *
-palloc_swap (uint8_t *upage)
+palloc_swap (void *upage)
 {
-  uint8_t *kpage = palloc_get_page (PAL_USER);
+  void *kpage = palloc_get_page (PAL_USER);
 
   if (kpage)
   {
@@ -66,6 +56,8 @@ palloc_swap (uint8_t *upage)
   //FIFO only use pop. Otherwise it may require an iteration to find the suitable page to eliminate.
 
   pagedir_clear_page (selected->t->pagedir, selected->upage);
+  swap_
+  
 }
 
 /*

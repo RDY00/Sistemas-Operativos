@@ -507,7 +507,6 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
       /* Get a page of memory. */
       uint8_t *kpage = palloc_swap (upage);
       if (kpage == NULL)
-      /*Aquí es dond entra el mecanismo de swapping*/
         return false;
 
       /* Load this page. */
