@@ -53,6 +53,7 @@ swap_write (void *kpage)
   return st;
 }
 
+/*Function to locate free slots in disk.*/
 block_sector_t
 find_free_sectors (void)
 {

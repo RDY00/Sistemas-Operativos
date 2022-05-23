@@ -22,7 +22,7 @@ static struct lock vm_lock;
 void *insert_frame (struct page *);
 void *get_kpage_swap (struct page *);
 
-/*Struct to represent */
+/*Struct to represent a memory frame.*/
 struct frame_entry
 {
   void *kpage;
@@ -31,7 +31,7 @@ struct frame_entry
   struct list_elem elem;
 };
 
-/* Function to initialize the Frame table. */
+/* Function to initialize the Frame table and the lock. */
 void
 frame_init (void)
 {
@@ -41,7 +41,7 @@ frame_init (void)
 
 /*
 Function to determine if a frame has been allocated correctly or
-not. If it can't be allocated should return null.
+not. If it can't be allocated returns null.
 */
 void *
 palloc_swap (void *upage, bool writable)
@@ -54,6 +54,7 @@ palloc_swap (void *upage, bool writable)
   return kpage;
 }
 
+/*Function to obtain a new frame that was recovered, and recently added to the frames list. This function helps swap a page form disk to RAM.*/
 void *
 get_kpage_swap (struct page *p)
 {
@@ -73,6 +74,7 @@ get_kpage_swap (struct page *p)
   return kpage;
 }
 
+/*Function to add a new page to the frames table. If added, returns the new page, if not returns null.*/
 void *
 insert_frame (struct page *p)
 {
@@ -90,6 +92,7 @@ insert_frame (struct page *p)
   return NULL;
 }
 
+/*Function to load the information of a page recently recovered from disk.*/
 bool
 activate_page (void *upage)
 {

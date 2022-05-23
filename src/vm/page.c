@@ -8,6 +8,7 @@ unsigned page_hash (const struct hash_elem *, void *);
 bool page_less (const struct hash_elem *, const struct hash_elem *, void *);
 void page_destructor (struct hash_elem *, void *);
 
+/*Function to create a new page table. Which is a hashtable.*/
 struct page_table *
 page_table_create (void)
 {
@@ -16,6 +17,7 @@ page_table_create (void)
   return pt;
 }
 
+/*Function to create a new element for the page table. Which is a hash.*/
 struct page *
 create_page_entry (struct page_table *pt, void *upage)
 {
@@ -25,6 +27,7 @@ create_page_entry (struct page_table *pt, void *upage)
   return p;
 }
 
+/*Function to void an element from the page table, the information of a page. Which is a hash.*/
 void
 remove_page_entry (struct page_table *pt, void *upage)
 {
@@ -34,6 +37,7 @@ remove_page_entry (struct page_table *pt, void *upage)
   free (hash_entry (e, struct page, elem));
 }
 
+/*Function to find an elemente in the page table.*/
 struct page *
 find_page_entry (struct page_table *pt, void *upage)
 {
@@ -43,12 +47,14 @@ find_page_entry (struct page_table *pt, void *upage)
   return e != NULL ? hash_entry (e, struct page, elem) : NULL;
 }
 
+/*Function to eliminate a page table entirely. */
 void
 page_destroy (struct page_table *pt)
 {
   hash_destroy (&pt->pt_hash, page_destructor);
 }
 
+/*Function to otaint the position of a page in the page table.*/
 unsigned
 page_hash (const struct hash_elem *e, void *aux UNUSED)
 {
@@ -56,6 +62,7 @@ page_hash (const struct hash_elem *e, void *aux UNUSED)
   return hash_bytes (&p->upage, sizeof p->upage);
 }
 
+/*Funtion to determine the positonal relation of two different pages.*/
 bool
 page_less (const struct hash_elem *a, const struct hash_elem *b, void *aux UNUSED)
 {
@@ -64,6 +71,7 @@ page_less (const struct hash_elem *a, const struct hash_elem *b, void *aux UNUSE
   return pa->upage < pb->upage;
 }
 
+/*Function to empty the information of a page in the page table.*/
 void
 page_destructor (struct hash_elem *e, void *aux UNUSED)
 {
