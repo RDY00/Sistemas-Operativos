@@ -27,7 +27,7 @@ create_page_entry (struct hash *h, block_sector_t sector,
   p->writable = writable;
   p->loaded = false;
   hash_insert (h, &p->elem);
-  printf ("Reached with page in hash = %p\n", upage);
+  // printf ("Reached with page in hash = %p\n", upage);
 }
 
 /*Function to void an element from the page table, the information of a page. Which is a hash.*/

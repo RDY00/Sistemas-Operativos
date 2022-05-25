@@ -52,12 +52,12 @@ void *
 palloc_swap (void *upage, bool writable)
 {
   lock_acquire (&vm_lock);
-  printf("Im in with upage=%p\n", upage);
+  // printf("Im in with upage=%p\n", upage);
   void *kpage = palloc_get_page (PAL_USER);
   if (!kpage) kpage = swap_frames ();
   create_frame (upage, kpage, writable);
   lock_release (&vm_lock);
-  printf ("end with page =%p\n", upage);
+  // printf ("end with page =%p\n", upage);
   return kpage;
 }
 
@@ -67,7 +67,7 @@ swap_frames (void)
   struct frame_entry *selected = select_swap_frame ();
   block_sector_t s = swap_write (selected->kpage);
   create_page_entry (&selected->t->pt, s, selected->upage, selected->writable);
-  printf ("last action with page =%p\n", selected->kpage);
+  // printf ("last action with page =%p\n", selected->upage);
   pagedir_clear_page (selected->t->pagedir, selected->upage);
   void *kpage = selected->kpage;
   free (selected);
@@ -116,10 +116,10 @@ activate_page (struct thread *t, void *upage)
   // if (p->loaded) return true;
 
   // p->loaded = true;
-  printf("Reached with page %p\n", upage);
-  printf("Activating page=%p\n", upage);
+  // printf("Reached with page %p\n", upage);
+  // printf("Activating page=%p\n", upage);
   void *kpage = palloc_swap (upage, p->writable);
-  printf("Success in activate_page, page=%p\n", upage);
+  // printf("Success in activate_page, page=%p\n", upage);
   swap_read (kpage, p->sector);
   bool success = pagedir_set_page (t->pagedir, upage, kpage, p->writable);
   remove_page_entry (&t->pt, upage);
