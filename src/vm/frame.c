@@ -18,7 +18,8 @@ Usar un lock para concurrencias.
 static struct list frames;
 /*Lock to handle sincronization for proces on frame table.*/
 static struct lock vm_lock;
-static struct lock page_fault_lock;
+static struct lock activate_lock;
+
 
 void *swap_frames (void);
 struct frame_entry *select_swap_frame (void);
@@ -40,7 +41,7 @@ frame_init (void)
 {
   list_init (&frames);
   lock_init (&vm_lock);
-  lock_init (&page_fault_lock);
+  lock_init (&activate_lock);
 }
 
 /*
@@ -56,6 +57,7 @@ palloc_swap (void *upage, bool writable)
   if (!kpage) kpage = swap_frames ();
   create_frame (upage, kpage, writable);
   lock_release (&vm_lock);
+  printf ("end with page =%p\n", upage);
   return kpage;
 }
 
@@ -65,6 +67,7 @@ swap_frames (void)
   struct frame_entry *selected = select_swap_frame ();
   block_sector_t s = swap_write (selected->kpage);
   create_page_entry (&selected->t->pt, s, selected->upage, selected->writable);
+  printf ("last action with page =%p\n", selected->kpage);
   pagedir_clear_page (selected->t->pagedir, selected->upage);
   void *kpage = selected->kpage;
   free (selected);
@@ -90,23 +93,37 @@ create_frame (void *upage, void *kpage, bool writable)
 
 /*Function to load the information of a page recently recovered from disk.*/
 bool
-activate_page (void *upage)
+activate_page (struct thread *t, void *upage)
 {
-  lock_acquire (&page_fault_lock);
+  // if (activate_lock.holder == t) return true;
+  // lock_acquire (&activate_lock);
   upage = pg_round_down (upage);
-  struct thread *t = thread_current ();
-  struct page *p = remove_page_entry (&t->pt, upage);
-  printf("Success in activate_page, page=%p\n", upage);
 
-  if (!p) {
-    printf("Shouldn't be here, page=%p\n", upage);
-    return false;
-  }
+  // struct thread *t = thread_current ();
+  struct page *p = find_page_entry (&t->pt, upage);
+  // printf("Activating page=%p, %p\n", upage, p);
 
+  if (p) {
+    if (p->loaded) return true;
+    else p->loaded = true;
+  } else return false;
+
+  // if (!p || !p->loaded) {
+  //   printf("Shouldn't be here, page=%p, %d\n", upage, p->loaded);
+  //   return false;
+  // }
+
+  // if (p->loaded) return true;
+
+  // p->loaded = true;
+  printf("Reached with page %p\n", upage);
+  printf("Activating page=%p\n", upage);
   void *kpage = palloc_swap (upage, p->writable);
+  printf("Success in activate_page, page=%p\n", upage);
   swap_read (kpage, p->sector);
   bool success = pagedir_set_page (t->pagedir, upage, kpage, p->writable);
+  remove_page_entry (&t->pt, upage);
   free (p);
-  lock_release (&page_fault_lock);
+  lock_release (&activate_lock);
   return success;
 }

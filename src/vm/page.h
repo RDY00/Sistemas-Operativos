@@ -10,6 +10,7 @@ struct page
   void *upage;
   block_sector_t sector;
   bool writable;
+  bool loaded;
   struct hash_elem elem;
 };
 
