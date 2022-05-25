@@ -9,49 +9,50 @@ bool page_less (const struct hash_elem *, const struct hash_elem *, void *);
 void page_destructor (struct hash_elem *, void *);
 
 /*Function to create a new page table. Which is a hashtable.*/
-struct page_table *
-page_table_create (void)
+void
+page_table_create (struct hash *h)
 {
-  struct page_table *pt = (struct page_table *) calloc (1, sizeof *pt);
-  hash_init (&pt->pt_hash, page_hash, page_less, NULL);
-  return pt;
+  hash_init (h, page_hash, page_less, NULL);
 }
 
 /*Function to create a new element for the page table. Which is a hash.*/
-struct page *
-create_page_entry (struct page_table *pt, void *upage)
+void
+create_page_entry (struct hash *h, block_sector_t sector,
+                   void *upage, bool writable)
 {
-  struct page *p = (struct page *) calloc (1, sizeof p);
+  struct page *p = (struct page *) malloc (sizeof p);
+  if (!p) PANIC ("Couldn't allocate page memory");
   p->upage = upage;
-  hash_insert (&pt->pt_hash, &p->elem);
-  return p;
+  p->sector = sector;
+  p->writable = writable;
+  hash_insert (h, &p->elem);
 }
 
 /*Function to void an element from the page table, the information of a page. Which is a hash.*/
-void
-remove_page_entry (struct page_table *pt, void *upage)
+struct page *
+remove_page_entry (struct hash *h, void *upage)
 {
   struct page p;
   p.upage = upage;
-  struct hash_elem *e = hash_delete (&pt->pt_hash, &p.elem);
-  free (hash_entry (e, struct page, elem));
+  struct hash_elem *e = hash_delete (h, &p.elem);
+  return e != NULL ? hash_entry (e, struct page, elem) : NULL;
 }
 
 /*Function to find an elemente in the page table.*/
 struct page *
-find_page_entry (struct page_table *pt, void *upage)
+find_page_entry (struct hash *h, void *upage)
 {
   struct page p;
   p.upage = upage;
-  struct hash_elem *e = hash_find (&pt->pt_hash, &p.elem);
+  struct hash_elem *e = hash_find (h, &p.elem);
   return e != NULL ? hash_entry (e, struct page, elem) : NULL;
 }
 
 /*Function to eliminate a page table entirely. */
 void
-page_destroy (struct page_table *pt)
+page_destroy (struct hash *h)
 {
-  hash_destroy (&pt->pt_hash, page_destructor);
+  hash_destroy (h, page_destructor);
 }
 
 /*Function to otaint the position of a page in the page table.*/

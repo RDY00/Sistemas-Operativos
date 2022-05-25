@@ -4,6 +4,7 @@
 #include "threads/vaddr.h"
 #include "vm/frame.h"
 #include "vm/page.h"
+#include "devices/block.h"
 
 /* Struct to implement swapping. */
 struct block *swap_block;
@@ -35,6 +36,8 @@ swap_read (void *kpage, block_sector_t s)
 
   for (; s < SECTORS_PER_PAGE; s++, temp += BLOCK_SECTOR_SIZE)
     block_read (swap_block, s, temp);
+
+  bitmap_flip (sectors, s);
 }
 
 /* Find an available swap slot and dump in the given page represented by UVA

@@ -18,16 +18,19 @@ Usar un lock para concurrencias.
 static struct list frames;
 /*Lock to handle sincronization for proces on frame table.*/
 static struct lock vm_lock;
+static struct lock page_fault_lock;
 
-void *insert_frame (struct page *);
-void *get_kpage_swap (struct page *);
+void *swap_frames (void);
+struct frame_entry *select_swap_frame (void);
+void create_frame (void *upage, void *kpage, bool writable);
 
 /*Struct to represent a memory frame.*/
 struct frame_entry
 {
-  void *kpage;
   struct thread *t;
-  struct page *p;
+  void *upage;
+  void *kpage;
+  bool writable;
   struct list_elem elem;
 };
 
@@ -37,6 +40,7 @@ frame_init (void)
 {
   list_init (&frames);
   lock_init (&vm_lock);
+  lock_init (&page_fault_lock);
 }
 
 /*
@@ -47,70 +51,62 @@ void *
 palloc_swap (void *upage, bool writable)
 {
   lock_acquire (&vm_lock);
-  struct page *p = create_page_entry (thread_current ()->pt, upage);
-  p->writable = writable;
-  void *kpage = get_kpage_swap (p);
+  printf("Im in with upage=%p\n", upage);
+  void *kpage = palloc_get_page (PAL_USER);
+  if (!kpage) kpage = swap_frames ();
+  create_frame (upage, kpage, writable);
   lock_release (&vm_lock);
   return kpage;
 }
 
-/*Function to obtain a new frame that was recovered, and recently added to the frames list. This function helps swap a page form disk to RAM.*/
 void *
-get_kpage_swap (struct page *p)
+swap_frames (void)
 {
-  void *kpage = insert_frame (p);
-
-  if (kpage) return kpage;
-
-  struct frame_entry *selected;
-  selected = list_entry (list_pop_front (&frames), struct frame_entry, elem);
-
-  selected->p->sector = swap_write (selected->kpage);
-  selected->p->in_disk = true;
-  pagedir_clear_page (selected->t->pagedir, selected->p->upage);
+  struct frame_entry *selected = select_swap_frame ();
+  block_sector_t s = swap_write (selected->kpage);
+  create_page_entry (&selected->t->pt, s, selected->upage, selected->writable);
+  pagedir_clear_page (selected->t->pagedir, selected->upage);
+  void *kpage = selected->kpage;
   free (selected);
-
-  kpage = insert_frame (p); /* It should work this time */
   return kpage;
 }
 
-/*Function to add a new page to the frames table. If added, returns the new page, if not returns null.*/
-void *
-insert_frame (struct page *p)
+struct frame_entry *
+select_swap_frame (void)
 {
-  void *kpage = palloc_get_page (PAL_USER);
+  return list_entry (list_pop_front (&frames), struct frame_entry, elem);
+}
 
-  if (kpage)
-  {
-    struct frame_entry *fe = (struct frame_entry *) calloc (1, sizeof *fe);
-    fe->t = thread_current ();
-    fe->p = p;
-    fe->kpage = kpage;
-    list_push_back (&frames, &fe->elem);
-    return kpage;
-  }
-  return NULL;
+void
+create_frame (void *upage, void *kpage, bool writable)
+{
+  struct frame_entry *fe = (struct frame_entry *) malloc (sizeof *fe);
+  fe->t = thread_current ();
+  fe->kpage = kpage;
+  fe->upage = upage;
+  fe->writable = writable;
+  list_push_back (&frames, &fe->elem);
 }
 
 /*Function to load the information of a page recently recovered from disk.*/
 bool
 activate_page (void *upage)
 {
-  lock_acquire (&vm_lock);
+  lock_acquire (&page_fault_lock);
   upage = pg_round_down (upage);
   struct thread *t = thread_current ();
-  struct page *p = find_page_entry (t->pt, upage);
+  struct page *p = remove_page_entry (&t->pt, upage);
+  printf("Success in activate_page, page=%p\n", upage);
 
-  if (!p || !p->in_disk)
-  {
-    lock_release (&vm_lock);
+  if (!p) {
+    printf("Shouldn't be here, page=%p\n", upage);
     return false;
   }
 
-  void *kpage = get_kpage_swap (p);
+  void *kpage = palloc_swap (upage, p->writable);
   swap_read (kpage, p->sector);
-  p->in_disk = false;
   bool success = pagedir_set_page (t->pagedir, upage, kpage, p->writable);
-  lock_release (&vm_lock);
+  free (p);
+  lock_release (&page_fault_lock);
   return success;
 }
