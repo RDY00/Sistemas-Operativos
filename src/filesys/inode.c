@@ -12,23 +12,33 @@
 
 /* TODO: 
    - Change inode_disk UNUSED length based on new inode size (size o list).
+   - Inicialize file_sectors list (PROB in create_inode)
    - Change functios to work with lists instead of arrays.
-     * byte_to_sector 
+     * byte_to_sector DONE
      * inode_create 
      * inode_close
-     * inode_open (?) */
+     * inode_open (?)
+     * inode_write_at 
+   - Create funcion to get SIZE sectors. If there's not enough space in freemap, free sectors, otherwise, add to file_sectors. */
 
+bool get_free_map_sectors (struct *inode, size_t);
 
 /* On-disk inode.
    Must be exactly BLOCK_SECTOR_SIZE bytes long. */
 struct inode_disk
   {
     // block_sector_t start;               /* First data sector. */
-    struct list file_blocks;            /* List of file blocks */
+    struct list file_sectors;            /* List of inode_elem */
     off_t length;                       /* File size in bytes. */
     unsigned magic;                     /* Magic number. */
     uint32_t unused[125];               /* Not used. */
   };
+
+struct inode_elem 
+{
+  struct list_elem elem;
+  block_sector_t sector;
+}
 
 /* Returns the number of sectors to allocate for an inode SIZE
    bytes long. */
@@ -57,8 +67,16 @@ static block_sector_t
 byte_to_sector (const struct inode *inode, off_t pos) 
 {
   ASSERT (inode != NULL);
-  if (pos < inode->data.length)
-    return inode->data.start + pos / BLOCK_SECTOR_SIZE;
+  if (pos < inode->data.length) {
+    struct list_elem *e = list_begin (&inode->file_sectors);
+    size_t s = bytes_to_sectors (pos); // Sector block to fetch
+
+    for (size_t i=0; i<=pos; i++)
+      e = list_next (e);
+
+    return list_entry (e, struct inode_elem, elem)->sector;
+  }
+    // return inode->data.start + pos / BLOCK_SECTOR_SIZE;
   else
     return -1;
 }
@@ -72,6 +90,34 @@ void
 inode_init (void) 
 {
   list_init (&open_inodes);
+}
+
+/* Request SIZE sectors and add them to FILE_SECTORS of INODE, returns 
+   TRUE if success, otherwise, returns FALSE and free sectors */
+bool 
+get_free_map_sectors (struct *inode inode, size_t size)
+{
+  block_sector_t requested_sectors[size];
+  for (size_t i=0; i<size; i++)
+  {
+    if (!free_map_allocate (1, *requested_sectors[i]))
+    {
+      for (size_t j=0; j<i; j++)
+        free_map_release (requested_sectors[i], 1)
+      return false;
+    }
+  }
+  // Save requested sectors in file_sectors (create struct inode_elem and add to list)
+  for (size_t i=0; i<size; i++)
+  {
+    struct inode_elem *ie = malloc (sizeof *ie);
+    if (ie)
+    {
+      ie->sector = requested_sectors[i];
+      list_push_back (&inode->file_sectors);
+    } else PANIC ("Couldn't allocate memory")
+  }
+  return true;
 }
 
 /* Initializes an inode with LENGTH bytes of data and
@@ -89,7 +135,7 @@ inode_create (block_sector_t sector, off_t length)
 
   /* If this assertion fails, the inode structure is not exactly
      one sector in size, and you should fix that. */
-  ASSERT (sizeof *disk_inode == BLOCK_SECTOR_SIZE);
+  ASSERT (sizeof *disk_inode == BLOCK_SECTOR_SIZE); // FIX THIS
 
   disk_inode = calloc (1, sizeof *disk_inode);
   if (disk_inode != NULL)
@@ -187,6 +233,7 @@ inode_close (struct inode *inode)
       if (inode->removed) 
         {
           free_map_release (inode->sector, 1);
+          // FIX THIS
           free_map_release (inode->data.start,
                             bytes_to_sectors (inode->data.length)); 
         }
@@ -289,7 +336,7 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       /* Number of bytes to actually write into this sector. */
       int chunk_size = size < min_left ? size : min_left;
       if (chunk_size <= 0)
-        break;
+        break; // FIX THIS
 
       if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE)
         {
