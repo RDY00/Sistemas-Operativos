@@ -10,6 +10,15 @@
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
 
+/* TODO: 
+   - Change inode_disk UNUSED length based on new inode size (size o list).
+   - Change functios to work with lists instead of arrays.
+     * byte_to_sector 
+     * inode_create 
+     * inode_close
+     * inode_open (?) */
+
+
 /* On-disk inode.
    Must be exactly BLOCK_SECTOR_SIZE bytes long. */
 struct inode_disk
